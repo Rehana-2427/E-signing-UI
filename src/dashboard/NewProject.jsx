@@ -9,20 +9,18 @@ import Breadcrumb from "../components/sessions/Breadcrumb";
 import Navbar from "./layout/Navbar";
 
 const NewProject = () => {
-    const user = JSON.parse(localStorage.getItem("user"));
+    const user = JSON.parse(localStorage.getItem('user'));
     const userEmail = user?.userEmail;
-
-    const location = useLocation();
-    const navigate = useNavigate();
-
-    // Preview result (if coming back from FilePreviewPage)
-    const { fileUrl: signedPreviewUrl, signedPdfBlob, title, signRequiredBy } = location.state || {};
-
+    const [pdfFile, setPdfFile] = useState(null);
+    const [pdfUrl, setPdfUrl] = useState(null);
+    const [showPdfEditor, setShowPdfEditor] = useState(false);
     const [uploadedPdf, setUploadedPdf] = useState(null);
     const navigate = useNavigate();
     const handleFileUpload = (e) => {
         const file = e.target.files[0];
-        if (!file) return;
+        if (file) {
+            setPdfFile(file);
+            setUploadedPdf(file);
 
             // Revoke previous URL if exists
             if (pdfUrl) {
@@ -36,56 +34,40 @@ const NewProject = () => {
         }
     };
 
-    useEffect(() => {
-        return () => {
-            if (pdfUrl) URL.revokeObjectURL(pdfUrl);
-        };
-    }, [pdfUrl]);
+    const handlePdfEditorClose = () => {
+        setShowPdfEditor(false);
+    };
 
-const handleSubmit = async (values, { setSubmitting, resetForm }) => {
-    const formData = new FormData();
+    const handleSubmit = async (values, { setSubmitting }) => {
+        const formData = new FormData();
+        formData.append("title", values.title);
+        const formattedDate = values.signRequiredBy.toISOString().split("T")[0]; // "YYYY-MM-DD"
+        formData.append("signRequiredBy", formattedDate);
+        formData.append("termsType", values.termsOption);
+        formData.append("senderEmail", userEmail);
 
-    formData.append("title", values.title);
-    const formattedDate = values.signRequiredBy.toISOString().split("T")[0];
-    formData.append("signRequiredBy", formattedDate);
-    formData.append("termsType", values.termsOption);
-    formData.append("senderEmail", userEmail);
+        if (values.termsOption === "link") {
+            formData.append("termsLink", values.termsOfSigning);
+        } else {
+            formData.append("termsPdf", values.termsOfSigning);
+        }
 
-    if (values.termsOption === "link") {
-        formData.append("termsLink", values.termsOfSigning);
-    } else {
-        formData.append("termsPdf", values.termsOfSigning);
-    }
+        if (pdfFile) {
+            formData.append("pdf", pdfFile);
+        }
 
-    formData.append("signers", JSON.stringify(values.signers));
+        formData.append("signers", JSON.stringify(values.signers));
 
-    if (signedPdfBlob) {
-        formData.append("pdf", signedPdfBlob, "signed-document.pdf");
-    } else if (pdfBlob) {
-        formData.append("pdf", pdfBlob);
-    }
-
-    try {
-        await documentApi.saveDocument(formData);
-        alert("Saved successfully");
-
-        // Reset Formik form
-        resetForm();
-
-        // Reset component state
-        setUploadedPdf(null);
-        setPdfUrl(null);
-        setPdfBlob(null);
-
-        // ⚠️ Clear location.state by navigating without it
-        navigate("/dashboard/new-project", { replace: true });
-
-    } catch (err) {
-        console.error("Upload failed:", err);
-    } finally {
-        setSubmitting(false);
-    }
-};
+        try {
+            const response = await documentApi.saveDocument(formData);
+            console.log(response);
+            alert("saved successfully");
+        } catch (error) {
+            console.error("Upload failed", error);
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
     useEffect(() => {
         const handleMessage = (e) => {
@@ -139,10 +121,9 @@ const handleSubmit = async (values, { setSubmitting, resetForm }) => {
                 <h2>Create a Signing Project</h2>
                 <Card style={{ margin: "20px" }}>
                     <Formik
-                        enableReinitialize
                         initialValues={{
-                            title: title || "",
-                            signRequiredBy: signRequiredBy ? new Date(signRequiredBy) : "",
+                            title: "",
+                            signRequiredBy: "",
                             termsOption: "document",
                             termsOfSigning: "",
                             signers: [{ name: "", email: "" }],
@@ -168,7 +149,7 @@ const handleSubmit = async (values, { setSubmitting, resetForm }) => {
                             isSubmitting
                         }) => (
                             <form onSubmit={handleSubmit} className="p-3">
-                                {/* Title and Date */}
+                                {/* Title */}
                                 <div className="row">
                                     <div className="col-md-5 form-group mb-3">
                                         <label htmlFor="title">Title <span style={{ color: "red" }}>*</span></label>
@@ -284,9 +265,7 @@ const handleSubmit = async (values, { setSubmitting, resetForm }) => {
                                             checked={values.termsOption === "document"}
                                             required
                                         />
-                                        <label className="form-check-label" htmlFor="termsDoc">
-                                            Document
-                                        </label>
+                                        <label className="form-check-label" htmlFor="termsDoc">Document</label>
                                     </div>
                                     <div className="form-check form-check-inline">
                                         <input
@@ -301,9 +280,7 @@ const handleSubmit = async (values, { setSubmitting, resetForm }) => {
                                             }}
                                             checked={values.termsOption === "link"}
                                         />
-                                        <label className="form-check-label" htmlFor="termsLink">
-                                            Link
-                                        </label>
+                                        <label className="form-check-label" htmlFor="termsLink">Link</label>
                                     </div>
                                 </div>
                                 {/* Conditional Fields */}

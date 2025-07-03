@@ -12,6 +12,7 @@ const DashboardRoute = () => {
             <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/new-project" element={<NewProject />} />
+                 <Route path="/file-editor" element={<FIleEditor />} />
                 <Route path="/preview" element={<FilePreviewPage />} />
                 <Route path="/receiveDcoment" element={<ReceiveDocument />} />
                 <Route path="/signedDcoment" element={<SignedDocument />} />

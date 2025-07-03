@@ -1,5 +1,6 @@
 import { Route, Routes } from "react-router-dom"
 import Dashboard from "./Dashboard"
+import FIleEditor from "./FIleEditor"
 import NewProject from "./NewProject"
 import FilePreviewPage from "./FilePreviewPage"
 import ReceiveDocument from "./ReceiveDocument"

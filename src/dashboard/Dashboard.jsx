@@ -16,8 +16,27 @@ const Dashboard = () => {
             <Link to="/dashboard/new-project">
               create a signing project <FaPlus />
             </Link>
+             
           </h1>
+        
         </Card>
+         <Card className="signing-card">
+          <h1>
+           <Link to="/dashboard/receiveDcoment">
+               document for signature <FaPlus />
+            </Link>
+          </h1>
+       
+        </Card>
+        <Card className="signing-card">
+          <h1>
+           <Link to="/dashboard/signedDcoment">
+              Signed Document <FaPlus />
+            </Link>
+          </h1>
+       
+        </Card>
+       
       </div>
     </div>
   )

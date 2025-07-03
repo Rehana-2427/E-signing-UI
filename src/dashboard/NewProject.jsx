@@ -2,79 +2,88 @@ import { FieldArray, Formik } from "formik";
 import { useEffect, useState } from "react";
 import { Button, Card } from "react-bootstrap";
 import DateTime from "react-datetime";
+import { useLocation, useNavigate } from "react-router-dom";
 import documentApi from "../api/documentapi";
 import Breadcrumb from "../components/sessions/Breadcrumb";
-import FilePreviewModal from "./FilePreviewModal";
 import Navbar from "./layout/Navbar";
 
 const NewProject = () => {
-    const user = JSON.parse(localStorage.getItem('user'));
+    const user = JSON.parse(localStorage.getItem("user"));
     const userEmail = user?.userEmail;
-    const [pdfFile, setPdfFile] = useState(null);
-    const [pdfUrl, setPdfUrl] = useState(null);
-    const [showPdfEditor, setShowPdfEditor] = useState(false);
-    const [uploadedPdf, setUploadedPdf] = useState(null);
-    const [showPreview, setShowPreview] = useState(false);
 
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    // Preview result (if coming back from FilePreviewPage)
+    const { fileUrl: signedPreviewUrl, signedPdfBlob, title, signRequiredBy } = location.state || {};
+
+    const [uploadedPdf, setUploadedPdf] = useState(null);
+    const [pdfUrl, setPdfUrl] = useState(null);
+    const [pdfBlob, setPdfBlob] = useState(null); // for upload
+
+    // Update on file upload
     const handleFileUpload = (e) => {
         const file = e.target.files[0];
-        if (file) {
-            setPdfFile(file);
-            setUploadedPdf(file);
+        if (!file) return;
 
-            // Revoke previous URL if exists
-            if (pdfUrl) {
-                URL.revokeObjectURL(pdfUrl);
-            }
-            const url = URL.createObjectURL(file);
-            setPdfUrl(url);
-        } else {
-            alert("Only PDF files are allowed.");
-        }
-    };
-
-    const handlePdfEditorClose = () => {
-        setShowPdfEditor(false);
-    };
-
-    const handleSubmit = async (values, { setSubmitting }) => {
-        const formData = new FormData();
-        formData.append("title", values.title);
-        const formattedDate = values.signRequiredBy.toISOString().split("T")[0]; // "YYYY-MM-DD"
-        formData.append("signRequiredBy", formattedDate);
-        formData.append("termsType", values.termsOption);
-        formData.append("senderEmail", userEmail);
-
-        if (values.termsOption === "link") {
-            formData.append("termsLink", values.termsOfSigning);
-        } else {
-            formData.append("termsPdf", values.termsOfSigning);
-        }
-
-        if (pdfFile) {
-            formData.append("pdf", pdfFile);
-        }
-
-        formData.append("signers", JSON.stringify(values.signers));
-
-        try {
-            const response = await documentApi.saveDocument(formData);
-            console.log(response);
-            alert("saved successfully");
-        } catch (error) {
-            console.error("Upload failed", error);
-        } finally {
-            setSubmitting(false);
-        }
+        const url = URL.createObjectURL(file);
+        setUploadedPdf(file);
+        setPdfUrl(url);
+        setPdfBlob(file); // original file
     };
 
     useEffect(() => {
         return () => {
-            if (pdfUrl) {
-                URL.revokeObjectURL(pdfUrl);
-            }
+            if (pdfUrl) URL.revokeObjectURL(pdfUrl);
         };
     }, [pdfUrl]);
+
+const handleSubmit = async (values, { setSubmitting, resetForm }) => {
+    const formData = new FormData();
+
+    formData.append("title", values.title);
+    const formattedDate = values.signRequiredBy.toISOString().split("T")[0];
+    formData.append("signRequiredBy", formattedDate);
+    formData.append("termsType", values.termsOption);
+    formData.append("senderEmail", userEmail);
+
+    if (values.termsOption === "link") {
+        formData.append("termsLink", values.termsOfSigning);
+    } else {
+        formData.append("termsPdf", values.termsOfSigning);
+    }
+
+    formData.append("signers", JSON.stringify(values.signers));
+
+    if (signedPdfBlob) {
+        formData.append("pdf", signedPdfBlob, "signed-document.pdf");
+    } else if (pdfBlob) {
+        formData.append("pdf", pdfBlob);
+    }
+
+    try {
+        await documentApi.saveDocument(formData);
+        alert("Saved successfully");
+
+        // Reset Formik form
+        resetForm();
+
+        // Reset component state
+        setUploadedPdf(null);
+        setPdfUrl(null);
+        setPdfBlob(null);
+
+        // ⚠️ Clear location.state by navigating without it
+        navigate("/dashboard/new-project", { replace: true });
+
+    } catch (err) {
+        console.error("Upload failed:", err);
+    } finally {
+        setSubmitting(false);
+    }
+};
+
+
 
     return (
         <div>
@@ -84,12 +93,13 @@ const NewProject = () => {
                 <h2>Create a Signing Project</h2>
                 <Card style={{ margin: "20px" }}>
                     <Formik
+                        enableReinitialize
                         initialValues={{
-                            title: "",
-                            signRequiredBy: "",
+                            title: title || "",
+                            signRequiredBy: signRequiredBy ? new Date(signRequiredBy) : "",
                             termsOption: "document",
                             termsOfSigning: "",
-                            signers: [{ name: "", email: "" }]
+                            signers: [{ name: "", email: "" }],
                         }}
                         onSubmit={handleSubmit}
                     >
@@ -98,10 +108,10 @@ const NewProject = () => {
                             handleChange,
                             handleBlur,
                             handleSubmit,
-                            setFieldValue
+                            setFieldValue,
                         }) => (
                             <form onSubmit={handleSubmit} className="p-3">
-                                {/* Title */}
+                                {/* Title and Date */}
                                 <div className="row">
                                     <div className="col-md-6 form-group mb-3">
                                         <label htmlFor="title">Title</label>
@@ -117,17 +127,17 @@ const NewProject = () => {
                                         />
                                     </div>
 
-                                    {/* Date */}
                                     <div className="col-md-6 form-group mb-3">
                                         <label htmlFor="signRequiredBy">Sign required by date</label>
                                         <DateTime
                                             name="signRequiredBy"
                                             timeFormat={false}
                                             dateFormat="YYYY-MM-DD"
-                                            onChange={(date) => {
-                                                setFieldValue("signRequiredBy", date.toDate());
-                                            }}
+                                            onChange={(date) =>
+                                                setFieldValue("signRequiredBy", date.toDate())
+                                            }
                                             inputProps={{ placeholder: "Select date" }}
+                                            value={values.signRequiredBy}
                                         />
                                     </div>
                                 </div>
@@ -148,7 +158,9 @@ const NewProject = () => {
                                             }}
                                             checked={values.termsOption === "document"}
                                         />
-                                        <label className="form-check-label" htmlFor="termsDoc">Document</label>
+                                        <label className="form-check-label" htmlFor="termsDoc">
+                                            Document
+                                        </label>
                                     </div>
                                     <div className="form-check form-check-inline">
                                         <input
@@ -163,34 +175,35 @@ const NewProject = () => {
                                             }}
                                             checked={values.termsOption === "link"}
                                         />
-                                        <label className="form-check-label" htmlFor="termsLink">Link</label>
+                                        <label className="form-check-label" htmlFor="termsLink">
+                                            Link
+                                        </label>
                                     </div>
                                 </div>
 
                                 {/* Conditional Fields */}
                                 {values.termsOption === "document" && (
                                     <div className="form-group mb-3">
-                                        <label>Upload Terms Document (PDF)</label>
-                                        <input
-                                            type="file"
-                                            accept="application/pdf,image/*"
-                                            className="form-control"
-                                            onChange={handleFileUpload}
-                                        />
+                                        <label>Terms Document</label>
+
+                                        {signedPreviewUrl ? (
+                                            <div className="d-flex align-items-center justify-content-between">
+                                                <p className="mb-0">Signed File: <strong>{title}.pdf</strong></p>
+                                                <a href={signedPreviewUrl} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-outline-primary">
+                                                    View
+                                                </a>
+                                            </div>
+                                        ) : (
+                                            <input
+                                                type="file"
+                                                accept="application/pdf,image/*"
+                                                className="form-control"
+                                                onChange={handleFileUpload}
+                                            />
+                                        )}
                                     </div>
                                 )}
-                                {uploadedPdf && (
-                                    <>
 
-                                        <Button
-                                            variant="primary"
-                                            className="mt-2 ms-2"
-                                            onClick={() => setShowPreview(true)}
-                                        >
-                                            Preview
-                                        </Button>
-                                    </>
-                                )}
 
                                 {values.termsOption === "link" && (
                                     <div className="form-group mb-3">
@@ -207,72 +220,89 @@ const NewProject = () => {
                                     </div>
                                 )}
 
-                                {/* Add Signers */}
-                                <FieldArray name="signers">
-                                    {({ remove, push }) => (
-                                        <div className="mb-3">
-                                            <label>People to Sign</label>
-                                            {values.signers.map((signer, index) => (
-                                                <div className="row mb-2" key={index}>
-                                                    <div className="col-md-5">
-                                                        <input
-                                                            name={`signers[${index}].name`}
-                                                            placeholder="Name"
-                                                            className="form-control"
-                                                            value={signer.name}
-                                                            onChange={handleChange}
-                                                        />
-                                                    </div>
-                                                    <div className="col-md-5">
-                                                        <input
-                                                            name={`signers[${index}].email`}
-                                                            placeholder="Email"
-                                                            className="form-control"
-                                                            value={signer.email}
-                                                            onChange={handleChange}
-                                                        />
-                                                    </div>
-                                                    <div className="col-md-2">
-                                                        {index > 0 && (
-                                                            <Button
-                                                                variant="danger"
-                                                                onClick={() => remove(index)}
-                                                            >
-                                                                Remove
-                                                            </Button>
-                                                        )}
-                                                    </div>
+                                {/* Preview Button (only show if preview not yet done) */}
+                                {!signedPreviewUrl && uploadedPdf && (
+                                    <Button
+                                        variant="primary"
+                                        className="mt-2 ms-2"
+                                        onClick={() =>
+                                            navigate("/dashboard/preview", {
+                                                state: {
+                                                    uploadedFile: uploadedPdf,
+                                                    fileUrl: pdfUrl,
+                                                    title: values.title,
+                                                    signRequiredBy: values.signRequiredBy,
+                                                },
+                                            })
+                                        }
+                                    >
+                                        Preview
+                                    </Button>
+                                )}
+
+                                {/* Signers (only show if preview has been completed) */}
+                                {signedPreviewUrl && (
+                                    <>
+                                        <FieldArray name="signers">
+                                            {({ remove, push }) => (
+                                                <div className="mb-3">
+                                                    <label>People to Sign</label>
+                                                    {values.signers.map((signer, index) => (
+                                                        <div className="row mb-2" key={index}>
+                                                            <div className="col-md-5">
+                                                                <input
+                                                                    name={`signers[${index}].name`}
+                                                                    placeholder="Name"
+                                                                    className="form-control"
+                                                                    value={signer.name}
+                                                                    onChange={handleChange}
+                                                                />
+                                                            </div>
+                                                            <div className="col-md-5">
+                                                                <input
+                                                                    name={`signers[${index}].email`}
+                                                                    placeholder="Email"
+                                                                    className="form-control"
+                                                                    value={signer.email}
+                                                                    onChange={handleChange}
+                                                                />
+                                                            </div>
+                                                            <div className="col-md-2">
+                                                                {index > 0 && (
+                                                                    <Button
+                                                                        variant="danger"
+                                                                        onClick={() => remove(index)}
+                                                                    >
+                                                                        Remove
+                                                                    </Button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                    <Button
+                                                        type="button"
+                                                        variant="secondary"
+                                                        onClick={() => push({ name: "", email: "" })}
+                                                    >
+                                                        + Add Signer
+                                                    </Button>
                                                 </div>
-                                            ))}
-                                            <Button
-                                                type="button"
-                                                variant="secondary"
-                                                onClick={() => push({ name: "", email: "" })}
-                                            >
-                                                + Add Signer
+                                            )}
+                                        </FieldArray>
+
+                                        {/* Submit */}
+                                        <div className="d-flex justify-content-end gap-2">
+                                            <Button variant="success" type="submit">
+                                                Send
                                             </Button>
                                         </div>
-                                    )}
-                                </FieldArray>
-
-                                {/* Buttons */}
-                                <div className="d-flex justify-content-end gap-2">
-                                    <Button variant="success" type="submit">
-                                        Send
-                                    </Button>
-                                </div>
+                                    </>
+                                )}
                             </form>
                         )}
                     </Formik>
                 </Card>
             </section>
-            {/* Preview Modal */}
-            <FilePreviewModal
-                show={showPreview}
-                onHide={() => setShowPreview(false)}
-                uploadedFile={uploadedPdf}
-                fileUrl={pdfUrl}
-            />
         </div>
     );
 };

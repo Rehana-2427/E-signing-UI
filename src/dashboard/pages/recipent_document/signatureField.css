@@ -1,43 +1,4 @@
 
-.main-header{
-    background-color: cornflowerblue;
-    border: 2px solid black;
-}
-.card-center-container {
-  height: 100vh;
-  width: 90%;
-  margin-left: 100px;
-}
-
-.signing-card {
-  border: 1px solid black;
-  padding: 1rem;
-}
-.signing-card {
-  padding: 10px;
-}
-
-.signing-card .row {
-  margin: 0;
-  display: flex; /* ensure flexbox */
-  gap: 10px; /* spacing between columns */
-  text-align: center;
-}
-
-.signing-card .col-md-3 {
-  border: 1px solid black;
-  padding: 15px;
-  flex: 1; /* make columns equal width and fill row */
-  box-sizing: border-box; /* include padding/border in width */
-}
-
-.signing-card .col-md-3 a {
-  display: block;
-  width: 100%;
-  text-decoration: none;
-  color: purple;
-}
-
 /* GenerateSignatureField.css */
 
 .signature-container {

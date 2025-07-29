@@ -1,45 +1,41 @@
 import axios from 'axios';
+import { BASE_URL } from './apiConfig';
 
-// Create an Axios instance
+const DOCUMENT_SERVICE_BASE = `${BASE_URL}/documentservice/api/documents`;
+
 const apiClient = axios.create({
-    baseURL: process.env.REACT_APP_DOCUMENT_API_URL || 'http://localhost:8084/api/documents',
-    headers: {
-        'Content-Type': 'multipart/form-data',
-    }
+    baseURL: DOCUMENT_SERVICE_BASE,
+    // Note: for multipart/form-data, do NOT set Content-Type manually; let axios set it
+    withCredentials: true,
 });
 
-
 const documentApi = {
-    saveDocument: async (formData) => {
-        return apiClient.post('/save-document', formData);  // Axios will detect it's FormData
-    },
-    getDocument: async (userEmail) => {
-        return apiClient.get('/getDocument', {
-            params: { userEmail: userEmail }
+    saveDocument: (formData) => {
+        return apiClient.post('/save-document', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
         });
     },
-    downloadPdf: (documentId) => {
-        return apiClient.get('/documentspdf', {
-            params: { documentId: documentId },
+    updateDocument: (documentId, formData) => {
+        return apiClient.put(`/update-document/${documentId}`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+    },
+    getMyConsents: (senderEmail) => {
+        return apiClient.get('/my-consents', {
+            params: { senderEmail },
+        });
+    },
+    getDocumentFile: (documentId) => {
+        return apiClient.get(`/view-document/${documentId}`, {
             responseType: 'blob',
         });
     },
-    saveSignatureDocument: async (formData) => {
-        return apiClient.post('/save-sign-document', formData);
-    },
 
-    getSignDocument: async (userEmail) => {
-        return apiClient.get('/getSignDocument', {
-            params: { userEmail: userEmail }
-        });
-    },
 
-    downloadSignedPdf: (id) => {
-        return apiClient.get(`/downloadSignedPdf`, {
-            params: { id },
-            responseType: 'blob',
-        });
-    },
 };
 
 export default documentApi;

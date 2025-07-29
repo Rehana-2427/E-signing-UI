@@ -5,9 +5,9 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import * as yup from 'yup';
-import api from "../api/authapi";
-import SocialButtons from "../components/sessions/SocialButtons";
-import TextField from "../components/sessions/TextField";
+import api from "../../api/authapi";
+import SocialButtons from "../sessions/SocialButtons";
+import TextField from "../sessions/TextField";
 
 const Signin = () => {
 

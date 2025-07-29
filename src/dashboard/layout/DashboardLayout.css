@@ -1,0 +1,84 @@
+/* DashboardLayout.css */
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    /* Prevent body scroll */
+}
+
+.navbar {
+    height: 60px;
+    /* Adjust based on your actual navbar height */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    /* Ensure it's on top */
+    overflow: hidden;
+}
+
+.main-layout {
+    display: flex;
+    height: 100%;
+    padding-top: 60px;
+    /* Same as navbar height */
+}
+
+.sidebar-container {
+    width: 240px;
+    /* Or whatever your sidebar width is */
+    flex-shrink: 0;
+    background-color: #f5f5f5;
+    height: calc(100vh - 60px);
+    overflow-y: auto;
+
+}
+
+.content-container {
+    flex: 1;
+    height: calc(100vh - 60px);
+    overflow-y: auto;
+    padding: 16px;
+    background-color: #fff;
+    margin-left: 30px;
+}
+
+
+/* Root layout that fills the viewport */
+.dashboard-layout {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  grid-template-columns: 220px 1fr;
+  grid-template-areas:
+    "navbar navbar"
+    "sidebar content";
+  height: 100vh;
+  overflow: hidden; /* prevent overall page scrolling */
+}
+
+/* Navbar stays at the top, spanning both columns */
+.navbar {
+  grid-area: navbar;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+/* Sidebar on the left, independently scrollable */
+.sidebar {
+  grid-area: sidebar;
+  overflow-y: auto;
+  height: calc(100vh - var(--navbar-height)); /* shrink to fit below navbar */
+}
+
+/* Main content area, independently scrollable */
+.content-container {
+  grid-area: content;
+  overflow-y: auto;
+  height: calc(100vh - var(--navbar-height));
+  padding: 1rem;
+}

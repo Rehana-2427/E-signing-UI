@@ -1,18 +1,18 @@
 import axios from 'axios';
+import { BASE_URL } from './apiConfig';
 
+const AUTH_SERVICE_BASE = `${BASE_URL}/authservice/api/auth`;
 // Create an Axios instance
 const apiClient = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8080/api/auth',
+ baseURL: AUTH_SERVICE_BASE,
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // optional
 });
 
-const api = {
-  validateUserEmail: (userEmail) =>
-    apiClient.get('/validateUserEmail', {
-      params: { userEmail }
-    }),
+const authapi = {
+
 
   saveUser: async (userData) => {
     return apiClient.post('/register', userData);
@@ -23,4 +23,4 @@ const api = {
   },
 };
 
-export default api;
+export default authapi;

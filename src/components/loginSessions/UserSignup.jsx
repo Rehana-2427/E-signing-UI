@@ -2,14 +2,18 @@ import { Formik } from "formik";
 import { useEffect, useState } from "react";
 import { Button, Card, Col, Modal, Row } from "react-bootstrap";
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { useLocation } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import Swal from 'sweetalert2';
 import * as yup from "yup";
-import api from "../api/authapi";
-import SocialButtons from "../components/sessions/SocialButtons";
-import TextField from "../components/sessions/TextField";
+import { default as authapi } from "../../api/authapi";
+import otpapi from "../../api/otpapi";
+import SocialButtons from "../sessions/SocialButtons";
+import TextField from "../sessions/TextField";
 
 const UserSignup = () => {
+    const location = useLocation();
+    const recipientEmail = location.state?.pass || "";
     const validationSchema = yup.object().shape({
         username: yup.string().required("Name is required"),
         email: yup.string().email("Invalid email").required("Email is required"),
@@ -24,7 +28,7 @@ const UserSignup = () => {
     });
 
     const initialValues = {
-        email: "",
+        email: recipientEmail,
         username: "",
         password: "",
         rePassword: ""
@@ -59,8 +63,9 @@ const UserSignup = () => {
     };
 
     const handleSendOtp = async (userEmail) => {
+        console.log(userEmail)
         try {
-            const response = await api.validateUserEmail(userEmail);
+            const response = await otpapi.validateUserEmail(userEmail);
             setSentOtp(response.data);
             setOtpSent(true);
             setShowOtpModal(true);
@@ -97,7 +102,7 @@ const UserSignup = () => {
         }
 
         try {
-            const response = await api.saveUser({
+            const response = await authapi.saveUser({
                 userName: values.username,
                 userEmail: values.email,
                 password: values.password,
@@ -197,7 +202,7 @@ const UserSignup = () => {
                                                 onChange={handleChange}
                                                 helperText={errors.email}
                                                 error={errors.email && touched.email}
-                                                disabled={otpSent || otpVerified}
+                                                disabled={otpSent || otpVerified || !!recipientEmail}
                                             />
                                             {!otpVerified && (
                                                 <div className="text-center mb-3">

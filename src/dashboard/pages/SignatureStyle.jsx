@@ -1,16 +1,23 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const SignatureStyle = ({ fontSettings, setFontSettings, selectedField }) => {
     const { fontType, fontSize, fontColor } = fontSettings;
-    
+    const [isEditable, setIsEditable] = useState(false);
+
 
     useEffect(() => {
         if (selectedField) {
-            selectedField.style.fontFamily = fontType;
-            selectedField.style.fontSize = `${fontSize}px`;
-            selectedField.style.color = fontColor;
+            setIsEditable(true);
+            if (selectedField.style) {
+                selectedField.style.fontFamily = fontType;
+                selectedField.style.fontSize = `${fontSize}px`;
+                selectedField.style.color = fontColor;
+            }
+        } else {
+            setIsEditable(false);
         }
     }, [fontType, fontSize, fontColor, selectedField]);
+
 
 
     const fonts = [
@@ -29,6 +36,7 @@ const SignatureStyle = ({ fontSettings, setFontSettings, selectedField }) => {
                     value={fontType}
                     onChange={(e) => setFontSettings(prev => ({ ...prev, fontType: e.target.value }))}
                     style={{ width: "90%", padding: "6px" }}
+                    disabled={!isEditable} // Disable if not editable
                 >
                     {fonts.map((font) => (
                         <option key={font} value={font} style={{ fontFamily: font }}>
@@ -48,6 +56,7 @@ const SignatureStyle = ({ fontSettings, setFontSettings, selectedField }) => {
                     value={fontSize}
                     onChange={(e) => setFontSettings(prev => ({ ...prev, fontSize: e.target.value }))}
                     style={{ width: "90%", padding: "6px" }}
+                    disabled={!isEditable} // Disable if not editable
                 />
             </div>
 
@@ -59,6 +68,7 @@ const SignatureStyle = ({ fontSettings, setFontSettings, selectedField }) => {
                     value={fontColor}
                     onChange={(e) => setFontSettings(prev => ({ ...prev, fontColor: e.target.value }))}
                     style={{ width: "90%", height: "40px", padding: "0", border: "none" }}
+                    disabled={!isEditable} // Disable if not editable
                 />
             </div>
         </div>

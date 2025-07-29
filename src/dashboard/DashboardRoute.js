@@ -1,24 +1,39 @@
-import { Route, Routes } from "react-router-dom"
-import Dashboard from "./Dashboard"
-import FIleEditor from "./FIleEditor"
-import NewProject from "./NewProject"
-import FilePreviewPage from "./FilePreviewPage"
-import ReceiveDocument from "./ReceiveDocument"
-import SignedDocument from "./SignedDocument"
+import { Route, Routes } from "react-router-dom";
+import FIleEditor from "./FIleEditor";
+import FilePreviewPage from "./FilePreviewPage";
+import NewProject from "./NewProject";
+import ReceiveDocument from "./ReceiveDocument";
+import SenderDocs from "./SenderDocs";
+import SignatureDocuments from "./SignatureDocuments";
+import SignedDocument from "./SignedDocument";
+import DashboardLayout from "./layout/DashboardLayout";
+import Contacts from "./pages/Contacts";
+import Dashboard from "./pages/Dashboard";
+import MyConsents from "./pages/MyConsents";
+import MyDocs from "./pages/MyDocs";
+import NewConsent from "./pages/NewConsent";
+import RecipentViewDoc from "./pages/recipent_document/RecipentViewDoc";
 
 const DashboardRoute = () => {
-    return (
-        <div>
-            <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/new-project" element={<NewProject />} />
-                 <Route path="/file-editor" element={<FIleEditor />} />
-                <Route path="/preview" element={<FilePreviewPage />} />
-                <Route path="/receiveDcoment" element={<ReceiveDocument />} />
-                <Route path="/signedDcoment" element={<SignedDocument />} />
-            </Routes>
-        </div>
-    )
-}
+  return (
+    <Routes>
+      <Route path="/" element={<DashboardLayout />}>
+        <Route index element={<Dashboard />} />
+        <Route path="new-project" element={<NewProject />} />
+        <Route path="file-editor" element={<FIleEditor />} />
+        <Route path="preview" element={<FilePreviewPage />} />
+        <Route path="receiveDcoment" element={<ReceiveDocument />} />
+        <Route path="signedDocument/:id" element={<SignedDocument />} />
+        <Route path="sender-docs" element={<SenderDocs />} />
+        <Route path="pdf-viewer" element={<SignatureDocuments />} />
+        <Route path="my-consents" element={<MyConsents />} />
+        <Route path="new-consent" element={<NewConsent />} />
+        <Route path="my-docs" element={<MyDocs />} />
+        <Route path="view-document" element={<RecipentViewDoc />} />
+        <Route path="contacts" element={<Contacts />} />
+      </Route>
+    </Routes>
+  );
+};
 
-export default DashboardRoute
+export default DashboardRoute;

@@ -5,8 +5,8 @@ const Dashboard = () => {
   return (
     <>
 
-      <h1>Dashboard</h1>
-      <p>Welcome back! Here's what's happening with your consents.</p>
+      <h1><strong>Dashboard</strong></h1>
+      <p>Welcome back!.</p>
       {/* <Button> <FaPlus />New Consent</Button> */}
       {/* <Card className="signing-card">
           <Row>

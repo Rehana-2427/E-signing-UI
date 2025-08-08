@@ -1,0 +1,53 @@
+import { Button } from "react-bootstrap";
+import { FaBars } from "react-icons/fa";
+import { Link } from "react-router-dom";
+
+const AdminNavbar = ({toggleSidebar}) => {
+    const toggleFullScreen = () => {
+        if (document.fullscreenEnabled) {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+    };
+    
+    return (
+        <div className="navbar navbar-expand-lg navbar-light shadow-sm px-3 ">
+
+            <Link to="/" className="navbar-brand d-flex align-items-center">
+                <img src="/assets/images/logo.png" alt="Logo" height="50" />
+            </Link>
+
+            <FaBars size={20} onClick={toggleSidebar} style={{ cursor: "pointer", marginLeft: "1rem" }} />
+
+            <div className="ms-auto d-flex align-items-center gap-3">
+
+
+                {/* Fullscreen Icon */}
+                <i
+                    datafullscreen="true"
+                    className="i-Full-Screen header-icon d-none d-sm-inline-block"
+                    onClick={toggleFullScreen}
+                    style={{ cursor: "pointer", fontSize: "1.5rem" }} // Increased size
+                />
+                <div
+                    className="notification-icon-container position-relative"
+                    style={{ cursor: "pointer", fontSize: "1.5rem" }} // Increased size
+                >
+                    <span
+                        className="badge bg-primary position-absolute top-0 start-100 translate-middle p-1 rounded-circle"
+                        style={{ width: "8px", height: "8px" }}
+                    ></span>
+                    <i className="i-Bell text-muted header-icon" />
+                </div>
+
+
+                <Button>Logout</Button>
+            </div>
+        </div>
+    )
+}
+
+export default AdminNavbar

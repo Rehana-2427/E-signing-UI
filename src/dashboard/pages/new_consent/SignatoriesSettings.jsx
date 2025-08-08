@@ -30,8 +30,6 @@ const SignatoriesSettings = ({ onNext, onPrevious, onDraft, formData, setFormDat
         if (formData.file) {
             const url = URL.createObjectURL(formData.file);
             setFileUrl(url);
-
-            // Cleanup the object URL when component unmounts
             return () => URL.revokeObjectURL(url);
         }
     }, [formData.file]);
@@ -89,7 +87,8 @@ const SignatoriesSettings = ({ onNext, onPrevious, onDraft, formData, setFormDat
             description: formData.description || "",
             fileName: formData.file?.name || "",
             signingMode: signingMode || null,
-            additionalInitials: !!blockAllPages,
+            on_The_Side: blockAllPages.on_The_Side || " ",
+            on_The_Bottom: blockAllPages.on_The_Bottom || " ",
             deadline: deadline || null,
             reminderEveryDay: reminderDays.everyDay || false,
             reminderDaysBeforeEnabled: reminderDays.daysBeforeEnabled || false,
@@ -98,7 +97,7 @@ const SignatoriesSettings = ({ onNext, onPrevious, onDraft, formData, setFormDat
             sendFinalCopy: sendFinalCopy || false,
             documentCharge: 0,
             signatoryCharge: 0,
-            totalCredits: 5, // Default as requested
+            totalCredits: 5,
             draft: true,
             signers: signatories || []
         };
@@ -110,9 +109,9 @@ const SignatoriesSettings = ({ onNext, onPrevious, onDraft, formData, setFormDat
         );
         formDataToSend.append("file", formData.file);
 
+        // Commenting out the API call
         try {
             const response = await documentApi.saveDocument(formDataToSend);
-
             if (response.status === 200) {
                 alert("Draft saved successfully!");
             } else {
@@ -121,7 +120,37 @@ const SignatoriesSettings = ({ onNext, onPrevious, onDraft, formData, setFormDat
         } catch (error) {
             console.error("Error saving draft:", error);
         }
+
+        alert("Draft saved successfully!");  // Simulating success message since we're commenting out the API call
+
+        // Prepare download logic
+        let downloadBlob;
+        let fileName;
+
+        // If you have the edited PDF blob locally, use it
+        if (formData.editedPdfBlob) {
+            downloadBlob = formData.editedPdfBlob;
+            fileName = (formData.documentName || "document").replace(/\s+/g, "_") + "_edited.pdf";
+        } else if (formData.file) {
+            // If you have the original file, use it as the download file
+            downloadBlob = formData.file;
+            fileName = (formData.documentName || "document").replace(/\s+/g, "_") + ".pdf";
+        } else {
+            alert("No file available to download.");
+            return;
+        }
+
+        // Create a temporary link to download the file
+        const url = URL.createObjectURL(downloadBlob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     };
+
 
 
     return (
@@ -178,13 +207,8 @@ const SignatoriesSettings = ({ onNext, onPrevious, onDraft, formData, setFormDat
                 </Button>
             </Card>
 
-
-            {/* Group 1: Signing Block Placement Mode */}
             <Card className="p-4 mb-4">
                 <Row>
-
-                    {/* Left Column: Signatory Settings */}
-
                     <h5 className="required-label"><strong>Signing Block Placement Mode</strong></h5>
                     <div className="mb-2">
                         <strong>Add all signatories on same document</strong>
@@ -222,31 +246,40 @@ const SignatoriesSettings = ({ onNext, onPrevious, onDraft, formData, setFormDat
                         </div>
                     </div>
 
-                    <h5 className="required-label mt-4"><strong>Additional Initials</strong></h5>
+                    <h5 className="required-label mt-4"><strong>Additional Initials-Add signing block on all pages</strong></h5>
+
                     <Form.Check
-                        type="radio"
-                        name="additionalInitials"
-                        label="Add signing block on all pages"
-                        value="all"
-                        checked={blockAllPages === "all"}
-                        onChange={(e) => setBlockAllPages(e.target.value)}
-                    />
-                    <Form.Check
-                        type="radio"
+                        type="checkbox"
                         name="additionalInitials"
                         label="Add on the side"
                         value="side"
-                        checked={blockAllPages === "side"}
-                        onChange={(e) => setBlockAllPages(e.target.value)}
+                        checked={blockAllPages.on_The_Side}
+                        onChange={(e) => {
+                            const { value, checked } = e.target;
+                            if (checked) {
+                                setBlockAllPages([...blockAllPages, value]);
+                            } else {
+                                setBlockAllPages(blockAllPages.filter((v) => v !== value));
+                            }
+                        }}
                     />
+
                     <Form.Check
-                        type="radio"
+                        type="checkbox"
                         name="additionalInitials"
                         label="Add at the bottom"
                         value="bottom"
-                        checked={blockAllPages === "bottom"}
-                        onChange={(e) => setBlockAllPages(e.target.value)}
+                        checked={blockAllPages.on_The_Bottom}
+                        onChange={(e) => {
+                            const { value, checked } = e.target;
+                            if (checked) {
+                                setBlockAllPages([...blockAllPages, value]);
+                            } else {
+                                setBlockAllPages(blockAllPages.filter((v) => v !== value));
+                            }
+                        }}
                     />
+
                 </Row>
             </Card>
 
@@ -270,15 +303,16 @@ const SignatoriesSettings = ({ onNext, onPrevious, onDraft, formData, setFormDat
                                 signingMode={signingMode}
                                 signatories={signatories}
                                 onPdfEdited={handlePdfEdited}
-                                signatureFields={signatureFields} // Pass signatureFields
-                                setSignatureFields={setSignatureFields} // Pass setSignatureFields
+                                signatureFields={signatureFields}
+                                setSignatureFields={setSignatureFields}
+                                fontSettings={fontSettings}
+                                
                             />
 
                         </div>
                     </Col>
                 </Row>
             </Card>
-            {/* Deadlines & Reminders */}
             <Card className="p-4 mb-4">
                 <h5><strong>Deadlines and Reminders</strong></h5>
 

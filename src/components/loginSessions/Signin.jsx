@@ -54,7 +54,7 @@ const Signin = () => {
 
             console.log(user.userName)
             if (recipientEmail) {
-                navigate('/dashboard/view-document', {
+                navigate('/dashboard/my-docs', {
                     state: {
                         documentId,
                         senderName,

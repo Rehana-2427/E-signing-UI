@@ -1,23 +1,43 @@
-import axios from 'axios';
-import { useState } from "react";
-import { Button, Card, Form, Spinner, Toast, ToastContainer } from "react-bootstrap";
+import { useEffect, useState } from "react";
+import { Button, Card, Form, Spinner } from "react-bootstrap";
+import { useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
+import adminApi from "../../../api/adminApi";
+import documentApi from "../../../api/documentapi";
 
+const PaymentSend = ({ onPrevious, formData, setFormData, setSignatureFields, signatureFields }) => {
+    const navigate = useNavigate();
 
-const PaymentSend = ({ onPrevious, formData, signatureFields }) => {
     const user = JSON.parse(localStorage.getItem('user'));
     const userEmail = user?.userEmail;
     const userName = user?.userName;
     const signatoryCount = formData.signatories?.length || 0;
-    const documentCharge = 5; // Fixed charge
-    const signatoryCharge = 1 * signatoryCount;
-    const totalCredits = documentCharge + signatoryCharge;
+    const [docCost, setDocCost] = useState(0);
+    const [signCost, setSignCost] = useState(0)
+
     const [confirmSend, setConfirmSend] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [showToast, setShowToast] = useState(false);
+    useEffect(() => {
+        // fetch credit cost from admin service
+        adminApi.getCreditSettings()
+            .then(res => {
+                setDocCost(res.data.docCost);
+                setSignCost(res.data.signCost);
+            })
+            .catch(err => {
+                console.error("Failed to load credit settings", err);
+                Swal.fire("Error", "Unable to load credit settings from server.", "error");
+            });
+    }, []);
 
+    const documentCharge = docCost;
+    const signatoryCharge = signCost * signatoryCount;
+    const totalCredits = signatoryCharge;
+    const balanceCredits = docCost - totalCredits
 
     const handleConfirmSend = async () => {
-        setIsLoading(true); 
+        setIsLoading(true);
+
         const formDataToSend = new FormData();
         const payload = {
             senderEmail: userEmail,
@@ -33,9 +53,9 @@ const PaymentSend = ({ onPrevious, formData, signatureFields }) => {
             reminderDaysBefore: formData.reminderDays?.daysBefore || null,
             reminderLastDay: formData.reminderDays?.lastDay || false,
             sendFinalCopy: formData.sendFinalCopy || false,
-            documentCharge: 5,
-            signatoryCharge: formData.signatories.length,
-            totalCredits: 5 + formData.signatories.length,
+            documentCharge,
+            signatoryCharge,
+            totalCredits,
             draft: false,
             signers: formData.signatories.map(s => ({ name: s.name, email: s.email }))
         };
@@ -43,44 +63,28 @@ const PaymentSend = ({ onPrevious, formData, signatureFields }) => {
         formDataToSend.append("file", formData.editedPdfBlob || formData.file);
 
         try {
-            const response = await axios.post("http://localhost:8084/api/documents/save-document", formDataToSend, {
-                responseType: 'blob',
+            await documentApi.saveDocument(formDataToSend);
+
+            Swal.fire({
+                title: 'Success!',
+                text: 'Document sent successfully!',
+                icon: 'success',
+                confirmButtonText: 'OK'
+            }).then(() => {
+
+                navigate("/dashboard/my-consents");
             });
-
-            setShowToast(true);
-            // // Prepare to download the PDF (either editedPdfBlob or response data)
-            // let downloadBlob;
-            // let fileName;
-
-            // if (formData.editedPdfBlob) {
-            //     // If you have the edited blob locally, use it
-            //     downloadBlob = formData.editedPdfBlob;
-            //     fileName = (formData.documentName || "document").replace(/\s+/g, "_") + "_edited.pdf";
-            // } else if (response.data) {
-            //     // If backend returns the file as blob
-            //     downloadBlob = response.data;
-            //     fileName = (formData.documentName || "document").replace(/\s+/g, "_") + ".pdf";
-            // } else {
-            //     alert("No file available to download.");
-            //     return;
-            // }
-
-            // // Create temporary link to download
-            // const url = URL.createObjectURL(downloadBlob);
-            // const a = document.createElement("a");
-            // a.href = url;
-            // a.download = fileName;
-            // document.body.appendChild(a);
-            // a.click();
-            // document.body.removeChild(a);
-            // URL.revokeObjectURL(url);
 
         } catch (err) {
             console.error(err);
-
-        }
-        finally {
-            setIsLoading(false); // stop loading
+            Swal.fire({
+                title: 'Error',
+                text: 'Something went wrong while sending the document.',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -88,20 +92,17 @@ const PaymentSend = ({ onPrevious, formData, signatureFields }) => {
         <Card className="p-4">
             <h4><strong>Payments & Confirmations</strong></h4>
             <p>Confirm the charges before sending the document for signing.</p>
-            <ToastContainer position="bottom-end" className="p-3">
-                <Toast onClose={() => setShowToast(false)} show={showToast} delay={3000} autohide bg="success">
-                    <Toast.Header>
-                        <strong className="me-auto">Success</strong>
-                    </Toast.Header>
-                    <Toast.Body className="text-white">File sent successfully!</Toast.Body>
-                </Toast>
-            </ToastContainer>
 
             <div className="mb-4">
-                <p><strong>Document Charges:</strong> 5 Credits</p>
-                <p><strong>Signatory Charges:</strong> {signatoryCount} × 1 Credit = {signatoryCharge} Credits</p>
-                <p><strong>Total Credits:</strong> {totalCredits} Credits</p>
+                <p><strong>Document Charges:</strong> {docCost}</p>
+                <p><strong>Signatory Charges:</strong> {signatoryCount} × {signCost} Credits</p>
+                <p><strong>Total Credits:</strong> {totalCredits} / {docCost} Credits</p>
+                <hr style={{ borderTop: '2px solid black' }} />
+                <p><strong>Used Credits:</strong> {totalCredits} Credits</p>
+                <p><strong>Balance Credits:</strong> {balanceCredits}</p>
             </div>
+
+
 
             <Form.Check
                 type="checkbox"
@@ -124,7 +125,6 @@ const PaymentSend = ({ onPrevious, formData, signatureFields }) => {
                         "Confirm and Send"
                     )}
                 </Button>
-
             </div>
         </Card>
     );

@@ -5,7 +5,6 @@ const DOCUMENT_SERVICE_BASE = `${BASE_URL}/documentservice/api/documents`;
 
 const apiClient = axios.create({
     baseURL: DOCUMENT_SERVICE_BASE,
-    // Note: for multipart/form-data, do NOT set Content-Type manually; let axios set it
     withCredentials: true,
 });
 
@@ -15,6 +14,7 @@ const documentApi = {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
+            responseType: 'blob', 
         });
     },
     updateDocument: (documentId, formData) => {
@@ -29,11 +29,20 @@ const documentApi = {
             params: { senderEmail },
         });
     },
-    getDocumentFile: (documentId) => {
-        return apiClient.get(`/view-document/${documentId}`, {
+
+     getDrafts: (senderEmail) => {
+        return apiClient.get('/drafts', {
+            params: { senderEmail },
+        });
+    },
+    // signerApi.js
+    getDocumentFile: (documentId, email) => {
+        return apiClient.get(`/view-document/${documentId}/${email}`, {
             responseType: 'blob',
         });
     },
+
+    sendReminder: (payload) => apiClient.post("/send-reminder", payload)
 
 
 };

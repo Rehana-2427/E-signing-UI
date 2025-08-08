@@ -16,7 +16,9 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 const RecipentViewDoc = () => {
     const location = useLocation();
-    const { documentId, senderName, recipientEmail, documentName } = location.state || {};
+    const user = JSON.parse(localStorage.getItem("user"));
+    const userEmail = user?.userEmail;
+    const { documentId, recipientEmail, documentName, signedFile } = location.state || {};
     const [signatureFields, setSignatureFields] = useState([]); // Stores all placed fields (image or text)
     const [generatedSignatures, setGeneratedSignatures] = useState([]); // From GenerateSignatureField (images)
     const [signatureMode, setSignatureMode] = useState("draw");
@@ -24,7 +26,6 @@ const RecipentViewDoc = () => {
     const [fileBlob, setFileBlob] = useState(null);
     const [loading, setLoading] = useState(true);
     const containerRef = useRef();
-    const [showToast, setShowToast] = useState(false);
     const [selectedField, setSelectedField] = useState(null);
     const [fontSettings, setFontSettings] = useState({
         fontType: "Arial",
@@ -33,15 +34,53 @@ const RecipentViewDoc = () => {
     });
     const [pdfRendered, setPdfRendered] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [saveDraft, setSaveDraft] = useState(false);
     const [viewportInfo, setViewportInfo] = useState(null);
+
+
+
+    // useEffect(() => {
+    //     setLoading(true);
+    //     setPdfRendered(false);
+    //     const fetchDocument = async () => {
+    //         try {
+    //             const response = await documentApi.getDocumentFile(documentId, userEmail);
+    //             const blob = new Blob([response.data], { type: "application/pdf" });
+    //             const blobUrl = URL.createObjectURL(blob);
+    //             setFileBlob(blobUrl);
+    //         } catch (error) {
+    //             console.error("Error loading document:", error);
+    //         } finally {
+    //             setLoading(false);
+    //         }
+    //     };
+
+    //     if (documentId) {
+    //         fetchDocument();
+    //     }
+    // }, [documentId]);
+
+    // 1. Render PDF pages ONCE when fileBlob changes
 
     useEffect(() => {
         setLoading(true);
-        setPdfRendered(false); // Reset PDF rendered flag when document changes
+        setPdfRendered(false);
         const fetchDocument = async () => {
             try {
-                const response = await documentApi.getDocumentFile(documentId);
-                const blob = new Blob([response.data], { type: "application/pdf" });
+                let blob;
+                if (signedFile) {
+                    // If signedFile is available, create a Blob from it
+                    const byteCharacters = atob(signedFile);
+                    const byteArrays = [];
+                    for (let i = 0; i < byteCharacters.length; i++) {
+                        byteArrays.push(byteCharacters.charCodeAt(i));
+                    }
+                    blob = new Blob([new Uint8Array(byteArrays)], { type: "application/pdf" });
+                } else {
+                    // Fetch the document if signedFile is not available
+                    const response = await documentApi.getDocumentFile(documentId, userEmail);
+                    blob = new Blob([response.data], { type: "application/pdf" });
+                }
                 const blobUrl = URL.createObjectURL(blob);
                 setFileBlob(blobUrl);
             } catch (error) {
@@ -51,12 +90,11 @@ const RecipentViewDoc = () => {
             }
         };
 
-        if (documentId) {
+        if (documentId || signedFile) {
             fetchDocument();
         }
-    }, [documentId]);
+    }, [documentId, signedFile]);
 
-    // 1. Render PDF pages ONCE when fileBlob changes
     useEffect(() => {
         if (!fileBlob || pdfRendered) return;
 
@@ -65,9 +103,8 @@ const RecipentViewDoc = () => {
             const pdf = await loadingTask.promise;
 
             const container = containerRef.current;
-            container.innerHTML = ""; // clear previous
+            container.innerHTML = ""; 
 
-            // Store viewport info for coordinate conversion
             const firstPage = await pdf.getPage(1);
             const viewport = firstPage.getViewport({ scale: 1.2 });
             setViewportInfo({
@@ -93,7 +130,7 @@ const RecipentViewDoc = () => {
 
                 const wrapper = document.createElement("div");
                 wrapper.style.position = "relative";
-                wrapper.style.marginBottom = "20px";
+                wrapper.style.marginBottom = "0px";
                 wrapper.style.width = `${viewport.width}px`;
                 wrapper.style.height = `${viewport.height}px`;
 
@@ -153,7 +190,7 @@ const RecipentViewDoc = () => {
                     imgEl.src = fieldData.imageData;
                     imgEl.style.width = "150px";
                     imgEl.style.height = "auto";
-                    imgEl.style.pointerEvents = "none"; 
+                    imgEl.style.pointerEvents = "none";
 
                     // Icons container for image
                     const iconContainer = document.createElement("div");
@@ -709,6 +746,19 @@ const RecipentViewDoc = () => {
         }
     };
 
+
+    const blobToBase64 = (blob) =>
+        new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                // reader.result is like 'data:application/pdf;base64,JVBERi0xLjcK...'
+                const base64data = reader.result.split(",")[1]; // strip prefix
+                resolve(base64data);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+
     const handleSave = async () => {
         if (!fileBlob) return;
 
@@ -721,28 +771,30 @@ const RecipentViewDoc = () => {
                 return;
             }
 
-            // Check if we have a valid blob
             if (!(editedPdfBlob instanceof Blob)) {
                 console.error("Invalid blob returned:", editedPdfBlob);
                 alert("Error generating PDF. Please try again.");
                 return;
             }
 
-            // ✅ Update signer status via signerApi
+            const base64Pdf = await blobToBase64(editedPdfBlob);
+
             await signerApi.updateSignerStatus({
-                email: recipientEmail,
+                email: recipientEmail || userEmail,
                 documentId: documentId,
                 signStatus: "completed",
+                signed_file: base64Pdf,
             });
 
             console.log("Signer status updated in DB");
-            // Download the file locally
-            const url = URL.createObjectURL(editedPdfBlob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = `${documentName}_edited.pdf`;
-            a.click();
-            URL.revokeObjectURL(url);
+
+            // Download locally
+            // const url = URL.createObjectURL(editedPdfBlob);
+            // const a = document.createElement("a");
+            // a.href = url;
+            // a.download = `${documentName}_edited.pdf`;
+            // a.click();
+            // URL.revokeObjectURL(url);
 
             console.log("PDF downloaded successfully");
 
@@ -756,14 +808,31 @@ const RecipentViewDoc = () => {
 
     const handleSaveDraft = async () => {
         if (!documentId || !recipientEmail) return;
+        if (!fileBlob) return;
 
-        setSaving(true);
+        setSaveDraft(true);
 
         try {
+            const editedPdfBlob = await generateEditedPdf(signatureFields);
+
+            if (!editedPdfBlob) {
+                alert("No fields to save or error generating PDF");
+                return;
+            }
+
+            if (!(editedPdfBlob instanceof Blob)) {
+                console.error("Invalid blob returned:", editedPdfBlob);
+                alert("Error generating PDF. Please try again.");
+                return;
+            }
+
+            const base64Pdf = await blobToBase64(editedPdfBlob);
+
             await signerApi.updateSignerStatus({
                 email: recipientEmail,
                 documentId: documentId,
-                signStatus: "draft"
+                signStatus: "draft",
+                signed_file: base64Pdf,
             });
 
             console.log("Draft saved");
@@ -780,22 +849,20 @@ const RecipentViewDoc = () => {
     return (
         <div style={{ padding: "20px" }}>
             <p>
-                <strong>Document:</strong> {documentName} &nbsp; | &nbsp;
-                <strong>Sender:</strong> {senderName} &nbsp; | &nbsp;
-                <strong>Recipient:</strong> {recipientEmail} &nbsp; | &nbsp;
                 <span style={{ display: 'inline-flex', gap: '8px' }}>
-                    <Button onClick={handleSave} disabled={saving}>
-                        {saving ? "Saving..." : "Save"}
-                    </Button>
+                    <h1><strong>My-docs {documentName} </strong></h1>&nbsp; &nbsp;
+
                     <Button onClick={handleSaveDraft} variant="secondary">
-                        {saving ? "Saving draft..." : "Save Draft"}
+                        {saveDraft ? "Saving draft..." : "Save Draft"}
+                    </Button>
+                    <Button onClick={handleSave} disabled={saving}>
+                        {saving ? "Sending..." : "Send"}
                     </Button>
                 </span>
             </p>
 
 
-            <div style={{ display: "flex", gap: "20px" }}>
-                {/* LEFT SIDE: PDF Content */}
+            <div style={{ display: "flex", }}>
                 <div
                     style={{
                         flex: 2,
@@ -811,16 +878,13 @@ const RecipentViewDoc = () => {
                         onDragOver={(e) => e.preventDefault()}
                         onDrop={handleDrop}
                         style={{
-                            background: "#f8f8f8",
-                            padding: "10px",
-                            borderRadius: "8px",
-                            minHeight: "90vh",
+                            background: "white",
+                            minHeight: "100vh",
                             position: "relative",
                         }}
                     />
                 </div>
 
-                {/* RIGHT SIDE: Signature Field UI */}
                 <div
                     style={{
                         flex: 1,
@@ -883,7 +947,14 @@ const RecipentViewDoc = () => {
                             />
                         </>
                     ) : (
-                        <UploadSignatureField />
+                        <>
+                            <UploadSignatureField />
+                            <SignatureStyle
+                                fontSettings={fontSettings}
+                                setFontSettings={setFontSettings}
+                                selectedField={selectedField}
+                            />
+                        </>
                     )}
                 </div>
             </div>

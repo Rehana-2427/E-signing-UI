@@ -7,7 +7,6 @@ import {
     FaPlusCircle,
     FaTachometerAlt
 } from "react-icons/fa";
-import { HiDocumentPlus } from "react-icons/hi2";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./Sidebar.css"; // Optional for styling
 
@@ -47,9 +46,8 @@ const Sidebar = () => {
 
     const navLinks = [
         { to: "/dashboard", label: "Dashboard", icon: <FaTachometerAlt size={30} /> },
-        { to: "/dashboard/my-consents", label: "My Consents", icon: <FaFileAlt size={30} /> },
+        { to: "/dashboard/my-consents", label: "My Consents & Agreements", icon: <FaFileAlt size={30} /> },
         { to: "/dashboard/new-consent", label: "New Consent", icon: <FaPlusCircle size={30} /> },
-        { to: "/dashboard/view-document", label: "View Document", icon: <HiDocumentPlus   size={30} /> },
         { to: "/dashboard/my-docs", label: "My Docs", icon: <FaFolderOpen size={30} /> },
         { to: "/dashboard/contacts", label: "Contacts", icon: <FaAddressBook size={30} /> }
     ];
@@ -65,6 +63,18 @@ const Sidebar = () => {
 
     const isLinkActive = (link) => {
         const currentPath = location.pathname;
+
+        const specialCases = {
+            '/dashboard/my-docs': '/dashboard/my-docs/view'
+        }
+        for (const [key, basePath] of Object.entries(specialCases)) {
+            if (link.to === key && currentPath.startsWith(basePath)) {
+                return true;
+            }
+        }
+        if (currentPath.startsWith('/dashboard/my-docs') || currentPath.startsWith('/hr-dashboard/evergreenjobs-applications')) {
+            return link.to === '/dashboard/my-docs'; // Mark /hr-dashboard as active
+        }
         return currentPath === link.to;
     };
 

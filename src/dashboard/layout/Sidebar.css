@@ -1,23 +1,21 @@
-.sidebar {
+/* .sidebar {
     width: 220px;
     height: 100vh;
     background-color: transparent;
     color: rgb(10, 10, 10);
     padding: 1rem;
     position: fixed;
-    /* top: 80px; */
     left: 0;
     z-index: 1050;
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
     animation: slideIn 0.3s ease;
     min-height: calc(100vh - 70px);
-    /* Adjust if your navbar is 70px tall */
 }
 .sidebar {
-    background-color: #f8f9fa; /* Light background */
+    background-color: #f8f9fa; 
     padding: 20px;
-    height: 100vh; /* Full height */
-    overflow-y: auto; /* Scrollable */
+    height: 100vh; 
+    overflow-y: auto; 
 }
 .sidebar ul {
     list-style: none;
@@ -60,4 +58,110 @@
         transform: translateX(0);
     }
 }
+ */
 
+/* Sidebar container */
+.sidebar {
+    width: 200px;
+    height: 100vh;
+    overflow-y: auto;
+    background-color: #f9f9f9;
+    border-right: 1px solid #ddd;
+    padding: 20px 10px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+}
+
+.sidebar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 4px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background-color: transparent;
+}
+
+
+.nav-link {
+    text-decoration: none;
+    color: #332e38;
+    font-weight: 500;
+    transition: all 0.3s ease-in-out;
+}
+
+/* .nav-link:hover {
+    color: #663399;
+    background-color: #eee;
+    border-radius: 5px;
+} */
+
+.nav-link.active {
+    color: #663399;
+    /* font-weight: bold; */
+}
+
+/* Icon and label container */
+.nav-link>div {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.flex-column>div {
+    margin-bottom: 30px;
+}
+
+.triangle {
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 0 0 10px 10px;
+    border-color: transparent transparent #663399 transparent;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 100%;
+    margin-left: 10px;
+    display: none;
+}
+
+.nav-link.active .triangle {
+    display: block;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid #ccc;
+    width: 100%;
+    margin: 10px 0;
+}
+
+@media screen and (max-width: 768px) {
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        border-right: none;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .nav-link>div {
+        flex-direction: row;
+        justify-content: flex-start;
+    }
+
+    .nav-link span {
+        margin-right: 10px;
+    }
+
+    .triangle {
+        display: none;
+    }
+}

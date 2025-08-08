@@ -3,12 +3,15 @@ import { Button, Table } from "react-bootstrap";
 import { AiFillEye, AiOutlineDownload } from "react-icons/ai";
 import { MdEmail } from "react-icons/md";
 import documentApi from "../../api/documentapi";
+import ReminderModal from "./ReminderModal";
 
 const MyConsents = () => {
     const [consents, setConsents] = useState([]);
     const [loading, setLoading] = useState(true);
     const user = JSON.parse(localStorage.getItem('user'));
     const senderEmail = user?.userEmail;
+    const [showModal, setShowModal] = useState(false);
+    const [selectedDoc, setSelectedDoc] = useState(null);
 
     useEffect(() => {
         setLoading(true);
@@ -23,17 +26,32 @@ const MyConsents = () => {
             });
     }, [senderEmail]);
 
+    const handleEmailClick = (doc) => {
+        setSelectedDoc(doc);
+        setShowModal(true);
+    };
+
+
+    const handleCloseModal = () => {
+        setShowModal(false);
+        setSelectedDoc(null)
+    };
+
+    const handleSendReminder = (docId) => {
+        console.log("Sending email reminder for document:", docId);
+        setShowModal(false);
+    };
+
     if (loading) return <p>Loading consents...</p>;
 
     return (
         <>
-            <h1>My Consents</h1>
+
             <Table hover>
                 <thead>
                     <tr>
                         <th>Document Name</th>
                         <th>Sent On</th>
-                        <th>Draft</th>
                         <th>Signed On</th>
                         <th># of People</th>
                         <th>Actions</th>
@@ -49,11 +67,9 @@ const MyConsents = () => {
                             <tr key={consent.documentId}>
                                 <td>{consent.documentName}</td>
                                 <td>{consent.sentOn}</td>
-                                <td>{consent.draft ? "Yes" : "No"}</td>
+
                                 <td>{consent.signedOn || "Not signed yet"}</td>
-                                <td>
-                                    {consent.signedCount} / {consent.totalSigners}
-                                </td>
+                                <td>{consent.signedCount} / {consent.totalSigners}</td>
                                 <td>
                                     <Button variant="primary" size="sm" className="me-2" title="View">
                                         <AiFillEye />
@@ -61,15 +77,30 @@ const MyConsents = () => {
                                     <Button variant="success" size="sm" className="me-2" title="Download">
                                         <AiOutlineDownload />
                                     </Button>
-                                    <Button variant="info" size="sm" title="Email">
+                                    <Button
+                                        variant="info"
+                                        size="sm"
+                                        title="Email"
+                                        onClick={() => handleEmailClick(consent)} // pass full consent object
+                                    >
                                         <MdEmail />
                                     </Button>
+
                                 </td>
                             </tr>
                         ))
                     )}
                 </tbody>
             </Table>
+
+            <ReminderModal
+                show={showModal}
+                onClose={handleCloseModal}
+                documentId={selectedDoc?.documentId}
+                documentName={selectedDoc?.documentName}
+                onSend={handleSendReminder}
+            />
+
         </>
     );
 };

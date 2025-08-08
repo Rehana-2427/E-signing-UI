@@ -1,13 +1,10 @@
-// import html2canvas from "html2canvas";
-// import jsPDF from "jspdf";
 // import * as pdfjsLib from "pdfjs-dist";
 // import pdfjsWorker from "pdfjs-dist/build/pdf.worker.entry";
 // import { useEffect, useRef, useState } from "react";
 // import { Button } from "react-bootstrap";
 // import { FaBars } from "react-icons/fa";
-// import { ToastContainer, toast } from "react-toastify";
+// import { ToastContainer } from "react-toastify";
 // import "react-toastify/dist/ReactToastify.css";
-// import documentApi from "../api/documentapi";
 // import Navbar from "../components/layout/Navbar";
 // import CustomSignatureField from "./CustomSignatureField";
 // import SignatureFields from "./SignatureFields";

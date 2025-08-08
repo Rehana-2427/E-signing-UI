@@ -99,7 +99,7 @@ const Signatory_Login = () => {
     const user = localStorage.getItem('user');
     if (checkboxChecked) {
       if (user) {
-        navigate('/dashboard/view-document', {
+        navigate('/dashboard/my-docs', {
           state: {
             documentId,
             senderName,

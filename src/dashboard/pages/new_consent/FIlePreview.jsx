@@ -2,16 +2,13 @@ import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfjsWorker from "pdfjs-dist/build/pdf.worker.entry";
 import { useEffect, useRef, useState } from "react";
-import { Button } from "react-bootstrap";
-
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
-const FilePreview = ({ file, formData, setSelectedField, signingMode, signatories, onPdfEdited, signatureFields, setSignatureFields, onSave }) => {
+const FilePreview = ({ file, setSelectedField, signingMode, signatories, onPdfEdited, signatureFields, setSignatureFields, onSave, fontSettings }) => {
     const [isEditable, setIsEditable] = useState(true);
     const [fileUrl, setFileUrl] = useState(null);
     const containerRef = useRef(null);
 
-    // Create file preview URL
     useEffect(() => {
         if (file) {
             const url = URL.createObjectURL(file);
@@ -20,18 +17,13 @@ const FilePreview = ({ file, formData, setSelectedField, signingMode, signatorie
         }
     }, [file]);
 
-    // Render PDF into editable div
     useEffect(() => {
         const container = containerRef.current;
         if (!container) return;
-        // Clear previous content
         container.innerHTML = "";
-
-        // Save scroll position
         const prevScrollTop = container.scrollTop;
 
         const renderPdfToHtml = async (pdfUrl, container) => {
-            // container.innerHTML = "";
             const loadingTask = pdfjsLib.getDocument(pdfUrl);
             const pdf = await loadingTask.promise;
 
@@ -67,7 +59,6 @@ const FilePreview = ({ file, formData, setSelectedField, signingMode, signatorie
                 textLayerDiv.style.height = `${viewport.height}px`;
                 textLayerDiv.style.pointerEvents = isEditable ? "auto" : "none";
 
-                // Render saved signature fields for this page
                 signatureFields
                     .filter((f) => f.pageIndex === i - 1)
                     .forEach((fieldData, fieldIdx) => {
@@ -81,7 +72,7 @@ const FilePreview = ({ file, formData, setSelectedField, signingMode, signatorie
                         wrapper.style.gap = "2px";
 
                         const nameDiv = document.createElement("div");
-                        nameDiv.innerText = fieldData.signatoryName; // Display signatory name
+                        nameDiv.innerText = fieldData.signatoryName;
                         nameDiv.style.fontWeight = "bold";
                         nameDiv.style.marginRight = "5px";
 
@@ -96,7 +87,6 @@ const FilePreview = ({ file, formData, setSelectedField, signingMode, signatorie
                         field.style.fontFamily = "Arial";
                         field.style.color = "#000";
 
-                        // --- Drag logic for moving after drop or save ---
                         let isDragging = false;
                         let offsetX = 0;
                         let offsetY = 0;
@@ -157,6 +147,7 @@ const FilePreview = ({ file, formData, setSelectedField, signingMode, signatorie
                                             : f
                                     )
                                 );
+
                             });
 
                             wrapper.appendChild(nameDiv);
@@ -170,10 +161,8 @@ const FilePreview = ({ file, formData, setSelectedField, signingMode, signatorie
                         }
                         textLayerDiv.appendChild(wrapper);
 
-                        // Move drag logic here so it always applies, but skip if clicking icon
                         wrapper.addEventListener("mousedown", (e) => {
                             if (!isEditable) return;
-                            // Prevent drag if clicking on an icon
                             if (e.target.classList.contains("field-icon")) return;
                             isDragging = true;
                             const wrapperRect = wrapper.getBoundingClientRect();
@@ -185,7 +174,6 @@ const FilePreview = ({ file, formData, setSelectedField, signingMode, signatorie
                             document.addEventListener("mouseup", onMouseUp);
                             e.stopPropagation();
                         });
-                        // --- End drag logic ---
                     });
 
                 textLayerDiv.addEventListener("drop", (e) => {
@@ -196,7 +184,7 @@ const FilePreview = ({ file, formData, setSelectedField, signingMode, signatorie
                     const rect = textLayerDiv.getBoundingClientRect();
                     const dropX = e.clientX - rect.left;
                     const dropY = e.clientY - rect.top;
-                    if (signingMode === "same_doc_end" || signingMode === "same_doc_pages" || signingMode === "multi_doc") {
+                    if (signingMode === "same_doc_end") {
                         const lastPageContainer = containerRef.current.lastElementChild;
                         const lastTextLayer = lastPageContainer?.querySelector("div");
 
@@ -205,7 +193,7 @@ const FilePreview = ({ file, formData, setSelectedField, signingMode, signatorie
                                 const wrapper = document.createElement("div");
                                 wrapper.style.position = "absolute";
                                 wrapper.style.left = `40px`;
-                                wrapper.style.top = `${100 + idx * 60}px`;
+                                wrapper.style.top = `${100 + idx * 10}px`;
                                 wrapper.style.display = "flex";
                                 wrapper.style.alignItems = "center";
                                 wrapper.style.gap = "1px";
@@ -247,7 +235,6 @@ const FilePreview = ({ file, formData, setSelectedField, signingMode, signatorie
                                 saveIcon.style.userSelect = "none";
                                 saveIcon.title = "Save Position";
                                 saveIcon.addEventListener("click", () => {
-                                    // Keep field editable after save
                                     wrapper.style.cursor = "default";
                                     [saveIcon, deleteIcon, editIcon].forEach(icon => {
                                         if (icon && icon.parentNode) icon.parentNode.removeChild(icon);
@@ -271,7 +258,19 @@ const FilePreview = ({ file, formData, setSelectedField, signingMode, signatorie
                                     isDragging = false;
                                     document.removeEventListener("mousemove", onMouseMove);
                                     document.removeEventListener("mouseup", onMouseUp);
+
+                                    const newX = parseFloat(wrapper.style.left);
+                                    const newY = parseFloat(wrapper.style.top);
+
+                                    setSignatureFields(prev =>
+                                        prev.map(f =>
+                                            f.id === fieldData.id
+                                                ? { ...f, x: newX, y: newY, saved: true }
+                                                : f
+                                        )
+                                    );
                                 };
+
 
                                 field.addEventListener("mousedown", (e) => {
                                     isDragging = true;
@@ -292,7 +291,6 @@ const FilePreview = ({ file, formData, setSelectedField, signingMode, signatorie
                                     document.addEventListener("mouseup", onMouseUp);
                                     e.stopPropagation();
                                 };
-
 
                                 wrapper.appendChild(nameDiv);
                                 wrapper.appendChild(field);
@@ -316,10 +314,300 @@ const FilePreview = ({ file, formData, setSelectedField, signingMode, signatorie
 
                         return;
                     }
+                    else if (signingMode === "same_doc_pages") {
+                        const existingPageCount = containerRef.current.children.length;
 
-                    // const rect = textLayerDiv.getBoundingClientRect();
-                    // let x = e.clientX - rect.left;
-                    // let y = e.clientY - rect.top;
+                        signatories.forEach((signatory, idx) => {
+                            let pageContainer;
+
+                            // Step 1: Use existing pages first
+                            if (idx < existingPageCount) {
+                                pageContainer = containerRef.current.children[idx];
+                            } else {
+                                // Step 2: Add blank pages only if needed
+                                const blankPageIndex = containerRef.current.children.length;
+
+                                const blankPage = document.createElement("div");
+                                blankPage.className = "pdf-page";
+                                blankPage.style.position = "relative";
+                                blankPage.style.width = "595px";
+                                blankPage.style.height = "842px";
+                                blankPage.style.backgroundColor = "#fff";
+                                blankPage.style.border = "1px solid #ccc";
+                                blankPage.style.margin = "10px auto";
+
+                                const blankTextLayer = document.createElement("div");
+                                blankTextLayer.className = "textLayer";
+                                blankTextLayer.style.position = "absolute";
+                                blankTextLayer.style.top = 0;
+                                blankTextLayer.style.left = 0;
+                                blankTextLayer.style.right = 0;
+                                blankTextLayer.style.bottom = 0;
+
+                                const pageNumber = document.createElement("div");
+                                pageNumber.innerText = `Page ${blankPageIndex + 1}`;
+                                pageNumber.style.position = "absolute";
+                                pageNumber.style.bottom = "10px";
+                                pageNumber.style.right = "10px";
+                                pageNumber.style.fontSize = "12px";
+                                pageNumber.style.color = "#000";
+
+                                blankPage.appendChild(blankTextLayer);
+                                blankPage.appendChild(pageNumber);
+                                containerRef.current.appendChild(blankPage);
+
+                                pageContainer = blankPage;
+                            }
+
+                            // Ensure textLayer exists (even for existing pages)
+                            let textLayerDiv = pageContainer.querySelector(".textLayer");
+                            if (!textLayerDiv) {
+                                textLayerDiv = document.createElement("div");
+                                textLayerDiv.className = "textLayer";
+                                textLayerDiv.style.position = "absolute";
+                                textLayerDiv.style.top = 0;
+                                textLayerDiv.style.left = 0;
+                                textLayerDiv.style.right = 0;
+                                textLayerDiv.style.bottom = 0;
+                                pageContainer.appendChild(textLayerDiv);
+                            }
+
+                            // Create wrapper for field + name
+                            const wrapper = document.createElement("div");
+                            wrapper.style.position = "absolute";
+                            wrapper.style.left = `60px`;
+                            wrapper.style.top = `100px`;
+                            wrapper.style.display = "flex";
+                            wrapper.style.alignItems = "center";
+                            wrapper.style.gap = "8px";
+                            wrapper.style.cursor = "move";
+
+                            const nameDiv = document.createElement("div");
+                            nameDiv.innerText = signatory.name;
+                            nameDiv.style.fontWeight = "bold";
+
+                            const field = document.createElement("div");
+                            field.innerText = "Signature";
+                            field.contentEditable = true;
+                            field.style.padding = "4px 8px";
+                            field.style.border = "1px solid #666";
+                            field.style.backgroundColor = "#f9f9f9";
+                            field.style.borderRadius = "4px";
+                            field.style.fontSize = "14px";
+                            field.style.fontFamily = "Arial";
+                            field.style.color = "#000";
+
+                            const deleteIcon = document.createElement("span");
+                            deleteIcon.innerHTML = "❌";
+                            deleteIcon.style.cursor = "pointer";
+                            deleteIcon.style.fontSize = "12px";
+                            deleteIcon.title = "Delete Field";
+                            deleteIcon.addEventListener("click", () => wrapper.remove());
+
+                            const editIcon = document.createElement("span");
+                            editIcon.innerHTML = "✏️";
+                            editIcon.style.cursor = "pointer";
+                            editIcon.style.fontSize = "12px";
+                            editIcon.title = "Edit Field";
+                            editIcon.addEventListener("click", () => setSelectedField(field));
+
+                            const saveIcon = document.createElement("span");
+                            saveIcon.innerHTML = "✅";
+                            saveIcon.style.cursor = "pointer";
+                            saveIcon.style.fontSize = "12px";
+                            saveIcon.title = "Save Position";
+                            saveIcon.addEventListener("click", () => {
+                                wrapper.style.cursor = "default";
+                                [saveIcon, deleteIcon, editIcon].forEach(icon => {
+                                    if (icon && icon.parentNode) icon.parentNode.removeChild(icon);
+                                });
+                            });
+
+                            let isDragging = false;
+                            let offsetX = 0;
+                            let offsetY = 0;
+
+                            const onMouseMove = (e) => {
+                                if (!isDragging) return;
+                                const parentRect = textLayerDiv.getBoundingClientRect();
+                                const newX = e.clientX - parentRect.left - offsetX;
+                                const newY = e.clientY - parentRect.top - offsetY;
+                                wrapper.style.left = `${newX}px`;
+                                wrapper.style.top = `${newY}px`;
+                            };
+
+                            const onMouseUp = () => {
+                                isDragging = false;
+                                document.removeEventListener("mousemove", onMouseMove);
+                                document.removeEventListener("mouseup", onMouseUp);
+
+                                // ✅ Update fieldData position in signatureFields state
+                                const newX = parseFloat(wrapper.style.left);
+                                const newY = parseFloat(wrapper.style.top);
+
+                                setSignatureFields((prevFields) =>
+                                    prevFields.map((f) => {
+                                        if (f.id === fieldData.id) {
+                                            return {
+                                                ...f,
+                                                x: newX,
+                                                y: newY,
+                                                saved: true
+                                            };
+                                        }
+                                        return f;
+                                    })
+                                );
+                            };
+
+
+                            const onMouseDownHandler = (e) => {
+                                isDragging = true;
+                                const wrapperRect = wrapper.getBoundingClientRect();
+                                offsetX = e.clientX - wrapperRect.left;
+                                offsetY = e.clientY - wrapperRect.top;
+                                document.addEventListener("mousemove", onMouseMove);
+                                document.addEventListener("mouseup", onMouseUp);
+                                e.stopPropagation();
+                            };
+
+                            field.addEventListener("mousedown", onMouseDownHandler);
+
+                            wrapper.appendChild(nameDiv);
+                            wrapper.appendChild(field);
+                            wrapper.appendChild(deleteIcon);
+                            wrapper.appendChild(editIcon);
+                            wrapper.appendChild(saveIcon);
+                            textLayerDiv.appendChild(wrapper);
+
+                            const fieldData = {
+                                id: Date.now() + Math.random(),
+                                label: "Signature",
+                                signatoryName: signatory.name,
+                                x: dropX,
+                                y: dropY + idx * 30,
+                                pageIndex: idx,
+                                saved: true
+                            };
+
+                            setSignatureFields((prev) => [...prev, fieldData]);
+                        });
+
+                        return;
+                    }
+                    else if (signingMode === "multi_doc") {
+                        const lastPageContainer = containerRef.current.lastElementChild;
+                        const lastTextLayer = lastPageContainer?.querySelector("div");
+
+                        if (lastTextLayer) {
+                            // Only one signature field, no matter how many signatories
+                            const wrapper = document.createElement("div");
+                            wrapper.style.position = "absolute";
+                            wrapper.style.left = `40px`;
+                            wrapper.style.top = `100px`;
+                            wrapper.style.display = "flex";
+                            wrapper.style.alignItems = "center";
+                            wrapper.style.gap = "1px";
+                            wrapper.style.cursor = "move";
+
+                            const field = document.createElement("div");
+                            field.innerText = label;
+                            field.contentEditable = true;
+                            field.style.padding = "4px 8px";
+                            field.style.border = "1px solid #666";
+                            field.style.backgroundColor = "#f9f9f9";
+                            field.style.borderRadius = "4px";
+                            field.style.fontSize = "14px";
+                            field.style.fontFamily = "Arial";
+                            field.style.color = "#000";
+
+                            const deleteIcon = document.createElement("span");
+                            deleteIcon.innerHTML = "❌";
+                            deleteIcon.style.cursor = "pointer";
+                            deleteIcon.style.fontSize = "12px";
+                            deleteIcon.title = "Delete Field";
+                            deleteIcon.addEventListener("click", () => wrapper.remove());
+
+                            const editIcon = document.createElement("span");
+                            editIcon.innerHTML = "✏️";
+                            editIcon.style.cursor = "pointer";
+                            editIcon.style.fontSize = "12px";
+                            editIcon.title = "Edit Field";
+                            editIcon.addEventListener("click", () => setSelectedField(field));
+
+                            const saveIcon = document.createElement("span");
+                            saveIcon.innerHTML = "✅";
+                            saveIcon.style.cursor = "pointer";
+                            saveIcon.style.fontSize = "12px";
+                            saveIcon.style.userSelect = "none";
+                            saveIcon.title = "Save Position";
+                            saveIcon.addEventListener("click", () => {
+                                wrapper.style.cursor = "default";
+                                [saveIcon, deleteIcon, editIcon].forEach(icon => {
+                                    if (icon && icon.parentNode) icon.parentNode.removeChild(icon);
+                                });
+                            });
+
+                            let isDragging = false;
+                            let offsetX = 0;
+                            let offsetY = 0;
+
+                            const onMouseMove = (e) => {
+                                if (!isDragging) return;
+                                const parentRect = lastTextLayer.getBoundingClientRect();
+                                const newX = e.clientX - parentRect.left - offsetX;
+                                const newY = e.clientY - parentRect.top - offsetY;
+                                wrapper.style.left = `${newX}px`;
+                                wrapper.style.top = `${newY}px`;
+                            };
+
+                            const onMouseUp = () => {
+                                isDragging = false;
+                                document.removeEventListener("mousemove", onMouseMove);
+                                document.removeEventListener("mouseup", onMouseUp);
+
+                                const newX = parseFloat(wrapper.style.left);
+                                const newY = parseFloat(wrapper.style.top);
+
+                                setSignatureFields(prev =>
+                                    prev.map(f =>
+                                        f.id === fieldData.id
+                                            ? { ...f, x: newX, y: newY, saved: true }
+                                            : f
+                                    )
+                                );
+                            };
+
+                            field.addEventListener("mousedown", (e) => {
+                                isDragging = true;
+                                const wrapperRect = wrapper.getBoundingClientRect();
+                                offsetX = e.clientX - wrapperRect.left;
+                                offsetY = e.clientY - wrapperRect.top;
+                                document.addEventListener("mousemove", onMouseMove);
+                                document.addEventListener("mouseup", onMouseUp);
+                                e.stopPropagation();
+                            });
+
+                            wrapper.appendChild(field);
+                            wrapper.appendChild(deleteIcon);
+                            wrapper.appendChild(editIcon);
+                            wrapper.appendChild(saveIcon);
+                            lastTextLayer.appendChild(wrapper);
+
+                            const fieldData = {
+                                id: Date.now() + Math.random(),
+                                label,
+                                signatoryName: "", // No name for multi_doc
+                                x: 40,
+                                y: 100,
+                                pageIndex: containerRef.current.children.length - 1,
+                                saved: true
+                            };
+
+                            setSignatureFields((prev) => [...prev, fieldData]);
+                        }
+                        return;
+                    }
 
                     const wrapper = document.createElement("div");
                     wrapper.style.position = "absolute";
@@ -382,16 +670,11 @@ const FilePreview = ({ file, formData, setSelectedField, signingMode, signatorie
                     };
                     setSignatureFields((prev) => [...prev, fieldData]);
                 });
-
                 textLayerDiv.addEventListener("dragover", (e) => e.preventDefault());
-
                 pageContainer.appendChild(img);
                 pageContainer.appendChild(textLayerDiv);
                 container.appendChild(pageContainer);
-
-
             }
-            // Restore scroll position after DOM update
             setTimeout(() => {
                 container.scrollTop = prevScrollTop;
             }, 0);
@@ -404,18 +687,21 @@ const FilePreview = ({ file, formData, setSelectedField, signingMode, signatorie
 
     const generateEditedPdf = async (fields = signatureFields) => {
         if (!file) return null;
-        // Read original PDF bytes
         const arrayBuffer = await file.arrayBuffer();
-        // Load PDF with pdf-lib
         const pdfDoc = await PDFDocument.load(arrayBuffer);
-        const pages = pdfDoc.getPages();
-        // Embed a font
+        let pages = pdfDoc.getPages();
         const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-
-        // Store viewport information for coordinate conversion
         const viewports = [];
 
-        // First pass: Store viewport information for each page
+        // If signingMode is same_doc_pages, add blank pages if needed
+        if (signingMode === "same_doc_pages" && signatories && signatories.length > pages.length) {
+            const { width, height } = pages[0].getSize();
+            for (let i = pages.length; i < signatories.length; i++) {
+                pdfDoc.addPage([width, height]);
+            }
+            pages = pdfDoc.getPages(); // update pages after adding
+        }
+
         for (let i = 0; i < pages.length; i++) {
             const page = pages[i];
             const { width, height } = page.getSize();
@@ -431,8 +717,6 @@ const FilePreview = ({ file, formData, setSelectedField, signingMode, signatorie
 
             const pdfX = field.x * scaleX;
             const pdfY = height - (field.y * scaleY);
-
-
 
             if (field.signatoryName) {
                 const nameWidth = font.widthOfTextAtSize(field.signatoryName, 12);
@@ -460,43 +744,24 @@ const FilePreview = ({ file, formData, setSelectedField, signingMode, signatorie
                 });
             }
         });
-
-        // Serialize and return PDF Blob
         const pdfBytes = await pdfDoc.save();
         return new Blob([pdfBytes], { type: "application/pdf" });
-    };
+    }
 
-    const handleSave = async () => {
-        // Log all x and y coordinates when Save button is clicked
-        console.log('Save button clicked. All signature fields:');
-        signatureFields.forEach(f => {
-            console.log(`field id: ${f.id}, x: ${f.x}, y: ${f.y}`);
-        });
-        if (onSave) onSave(signatureFields);
 
-        const editedPdfBlob = await generateEditedPdf(signatureFields, signingMode);
-        if (!editedPdfBlob) return;
 
-        // Send to parent if needed
-        if (onPdfEdited) onPdfEdited(editedPdfBlob);
-
-        // // ✅ Automatically trigger download
-        // const url = URL.createObjectURL(editedPdfBlob);
-        // const a = document.createElement("a");
-        // a.href = url;
-        // a.download = formData?.documentName ? `${formData.documentName}_edited.pdf` : "edited_document.pdf";
-        // document.body.appendChild(a);
-        // a.click();
-        // document.body.removeChild(a);
-        // URL.revokeObjectURL(url);
-    };
+    useEffect(() => {
+        const autoSave = async () => {
+            if (signatureFields.length === 0) return;
+            if (onSave) onSave(signatureFields);
+            const editedPdfBlob = await generateEditedPdf(signatureFields, signingMode, signatories);
+            if (editedPdfBlob && onPdfEdited) onPdfEdited(editedPdfBlob);
+        };
+        autoSave();
+    }, [signatureFields]);
 
     return (
         <>
-            <div style={{ display: "flex", justifyContent: "flex-end" }} className="mt-3">
-                <Button variant="success" onClick={handleSave}>Save</Button>
-            </div>
-
             <div>
                 <div
                     ref={containerRef}
@@ -511,7 +776,6 @@ const FilePreview = ({ file, formData, setSelectedField, signingMode, signatorie
                         backgroundColor: "#fff",
                     }}
                 />
-
             </div>
         </>
     );

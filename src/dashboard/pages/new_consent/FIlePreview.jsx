@@ -324,7 +324,6 @@ const FilePreview = ({ file, setSelectedField, signingMode, signatories, onPdfEd
                             if (idx < existingPageCount) {
                                 pageContainer = containerRef.current.children[idx];
                             } else {
-                                // Step 2: Add blank pages only if needed
                                 const blankPageIndex = containerRef.current.children.length;
 
                                 const blankPage = document.createElement("div");
@@ -371,8 +370,6 @@ const FilePreview = ({ file, setSelectedField, signingMode, signatories, onPdfEd
                                 textLayerDiv.style.bottom = 0;
                                 pageContainer.appendChild(textLayerDiv);
                             }
-
-                            // Create wrapper for field + name
                             const wrapper = document.createElement("div");
                             wrapper.style.position = "absolute";
                             wrapper.style.left = `60px`;
@@ -666,7 +663,8 @@ const FilePreview = ({ file, setSelectedField, signingMode, signatories, onPdfEd
                         x: dropX,
                         y: dropY,
                         pageIndex: i - 1,
-                        saved: false
+                        saved: false, 
+                        fontSettings:fontSettings
                     };
                     setSignatureFields((prev) => [...prev, fieldData]);
                 });

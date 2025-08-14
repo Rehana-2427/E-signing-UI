@@ -1,7 +1,6 @@
 import axios from 'axios';
-import { BASE_URL } from './apiConfig';
 
-const AUTH_SERVICE_BASE = `${BASE_URL}/authservice/api/auth`;
+const AUTH_SERVICE_BASE = `${process.env.REACT_APP_API_URL}/authservice/api/auth`;
 // Create an Axios instance
 const apiClient = axios.create({
  baseURL: AUTH_SERVICE_BASE,

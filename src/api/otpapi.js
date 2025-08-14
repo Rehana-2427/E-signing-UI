@@ -1,7 +1,6 @@
 import axios from 'axios';
-import { BASE_URL } from './apiConfig';
 
-const OTP_SERVICE_BASE = `${BASE_URL}/authservice/otp`;
+const OTP_SERVICE_BASE = `${process.env.REACT_APP_API_URL}/authservice/otp`;
 // Create an Axios instance
 const apiClient = axios.create({
  baseURL: OTP_SERVICE_BASE,

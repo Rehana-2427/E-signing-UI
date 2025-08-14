@@ -5,7 +5,8 @@ import {
     FaFileAlt,
     FaFolderOpen,
     FaPlusCircle,
-    FaTachometerAlt
+    FaTachometerAlt,
+    FaUser
 } from "react-icons/fa";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./Sidebar.css"; // Optional for styling
@@ -49,7 +50,8 @@ const Sidebar = () => {
         { to: "/dashboard/my-consents", label: "My Consents & Agreements", icon: <FaFileAlt size={30} /> },
         { to: "/dashboard/new-consent", label: "New Consent", icon: <FaPlusCircle size={30} /> },
         { to: "/dashboard/my-docs", label: "My Docs", icon: <FaFolderOpen size={30} /> },
-        { to: "/dashboard/contacts", label: "Contacts", icon: <FaAddressBook size={30} /> }
+        { to: "/dashboard/contacts", label: "Contacts", icon: <FaAddressBook size={30} /> },
+        { to: "/dashboard/profile", label: "Profile", icon: <FaUser size={30} /> }
     ];
 
     const handleLinkClick = (to) => {
@@ -98,8 +100,6 @@ const Sidebar = () => {
                                 transition: "color 0.3s",
                             }}
                         >
-                            {/* <span style={{ marginBottom: "5px" }}>{link.icon}</span> */}
-                            {/* {link.label} */}
                             <div style={{ display: "flex", alignItems: "center", flexDirection: "column", position: "relative", }}>
                                 <div
                                     style={{

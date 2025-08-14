@@ -1,7 +1,6 @@
 import axios from 'axios';
-import { BASE_URL } from './apiConfig';
 
-const DOCUMENT_SERVICE_BASE = `${BASE_URL}/documentservice/api/documents`;
+const DOCUMENT_SERVICE_BASE = `${process.env.REACT_APP_API_URL}/documentservice/api/documents`;
 
 const apiClient = axios.create({
     baseURL: DOCUMENT_SERVICE_BASE,
@@ -42,8 +41,13 @@ const documentApi = {
         });
     },
 
-    sendReminder: (payload) => apiClient.post("/send-reminder", payload)
+    sendReminder: (payload) => apiClient.post("/send-reminder", payload),
 
+    getTotalCredits : (senderEmail) => {
+        return apiClient.get('/total-credits',{
+            params:{senderEmail}
+        })
+    },
 
 };
 

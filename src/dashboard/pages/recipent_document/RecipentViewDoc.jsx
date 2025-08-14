@@ -2,8 +2,9 @@ import { PDFDocument, rgb } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfjsWorker from "pdfjs-dist/build/pdf.worker.entry";
 import { useEffect, useRef, useState } from "react";
-import { Button } from "react-bootstrap";
-import { useLocation } from "react-router-dom";
+import { Button, } from "react-bootstrap";
+import { useLocation, useNavigate } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
 import documentApi from "../../../api/documentapi";
 import signerApi from "../../../api/signerapi";
 import SignatureStyle from "../SignatureStyle";
@@ -36,7 +37,7 @@ const RecipentViewDoc = () => {
     const [saving, setSaving] = useState(false);
     const [saveDraft, setSaveDraft] = useState(false);
     const [viewportInfo, setViewportInfo] = useState(null);
-
+    const navigate = useNavigate();
 
 
     // useEffect(() => {
@@ -103,7 +104,7 @@ const RecipentViewDoc = () => {
             const pdf = await loadingTask.promise;
 
             const container = containerRef.current;
-            container.innerHTML = ""; 
+            container.innerHTML = "";
 
             const firstPage = await pdf.getPage(1);
             const viewport = firstPage.getViewport({ scale: 1.2 });
@@ -767,13 +768,13 @@ const RecipentViewDoc = () => {
         try {
             const editedPdfBlob = await generateEditedPdf(signatureFields);
             if (!editedPdfBlob) {
-                alert("No fields to save or error generating PDF");
+                toast.error("No fields to save or error generating PDF");
                 return;
             }
 
             if (!(editedPdfBlob instanceof Blob)) {
                 console.error("Invalid blob returned:", editedPdfBlob);
-                alert("Error generating PDF. Please try again.");
+                toast.error("Error generating PDF. Please try again.");
                 return;
             }
 
@@ -786,29 +787,22 @@ const RecipentViewDoc = () => {
                 signed_file: base64Pdf,
             });
 
-            console.log("Signer status updated in DB");
+            toast.success("Document sent successfully!");
+            setTimeout(() => {
+                navigate("/dashboard/my-docs");
+            }, 1500);
 
-            // Download locally
-            // const url = URL.createObjectURL(editedPdfBlob);
-            // const a = document.createElement("a");
-            // a.href = url;
-            // a.download = `${documentName}_edited.pdf`;
-            // a.click();
-            // URL.revokeObjectURL(url);
-
-            console.log("PDF downloaded successfully");
 
         } catch (error) {
             console.error("Error saving document:", error);
-            alert("Error saving document. Please try again.");
+            toast.error("Error saving document. Please try again.");
         } finally {
             setSaving(false);
         }
     };
 
     const handleSaveDraft = async () => {
-        if (!documentId || !recipientEmail) return;
-        if (!fileBlob) return;
+        if (!documentId || !recipientEmail || !fileBlob) return;
 
         setSaveDraft(true);
 
@@ -816,13 +810,13 @@ const RecipentViewDoc = () => {
             const editedPdfBlob = await generateEditedPdf(signatureFields);
 
             if (!editedPdfBlob) {
-                alert("No fields to save or error generating PDF");
+                toast.error("No fields to save or error generating PDF");
                 return;
             }
 
             if (!(editedPdfBlob instanceof Blob)) {
                 console.error("Invalid blob returned:", editedPdfBlob);
-                alert("Error generating PDF. Please try again.");
+                toast.error("Error generating PDF. Please try again.");
                 return;
             }
 
@@ -835,16 +829,17 @@ const RecipentViewDoc = () => {
                 signed_file: base64Pdf,
             });
 
+            toast.success("Draft saved successfully!");
             console.log("Draft saved");
-            alert("Draft saved successfully!");
 
         } catch (error) {
             console.error("Failed to save draft:", error);
-            alert("Error saving draft.");
+            toast.error("Error saving draft.");
         } finally {
-            setSaving(false);
+            setSaveDraft(false);
         }
     };
+
 
     return (
         <div style={{ padding: "20px" }}>
@@ -860,7 +855,7 @@ const RecipentViewDoc = () => {
                     </Button>
                 </span>
             </p>
-
+            <ToastContainer position="top-right" autoClose={3000} />
 
             <div style={{ display: "flex", }}>
                 <div

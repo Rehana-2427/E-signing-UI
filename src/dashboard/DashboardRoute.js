@@ -12,6 +12,7 @@ import Contacts from "./pages/Contacts";
 import Dashboard from "./pages/Dashboard";
 import MyDocs from "./pages/MyDocs";
 import NewConsent from "./pages/NewConsent";
+import Profile from "./pages/Profile";
 import RecipentViewDoc from "./pages/recipent_document/RecipentViewDoc";
 
 const DashboardRoute = () => {
@@ -31,6 +32,7 @@ const DashboardRoute = () => {
         <Route path="/my-docs" element={<MyDocs />} />
         <Route path="/my-docs/view" element={<RecipentViewDoc />} />
         <Route path="/contacts" element={<Contacts />} />
+        <Route path="/profile" element={<Profile />} />
       </Route>
     </Routes>
   );

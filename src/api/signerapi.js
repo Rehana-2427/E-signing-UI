@@ -1,7 +1,6 @@
 import axios from 'axios';
-import { BASE_URL } from './apiConfig';
 
-const SIGNER_SERVICE_BASE = `${BASE_URL}/documentservice/api/signer`;
+const SIGNER_SERVICE_BASE = `${process.env.REACT_APP_API_URL}/documentservice/api/signer`;
 
 const apiClient = axios.create({
     baseURL: SIGNER_SERVICE_BASE,

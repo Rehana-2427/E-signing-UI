@@ -35,32 +35,74 @@ const MyDocs = () => {
 
 
     const handleEmail = (signer) => {
-        // Trigger email logic here
         console.log("Emailing for", signer.email);
     };
+    const handleDownload = (doc) => {
+        const documentName = doc?.documentName || doc?.document?.documentName;
+        const signedFile = doc?.signedFile;
+        const originalFile = doc?.file || doc?.document?.file;
+        const signStatus = doc?.signStatus;
 
-    const handleDownload = (documentId, documentName, signedFile) => {
-        if (!signedFile) {
-            alert("No signed file available yet.");
+        // Determine which file to download based on sign status
+        let base64File;
+        if (signStatus === "completed" && signedFile) {
+            base64File = signedFile; // Use signed file if available
+        } else if (originalFile) {
+            base64File = originalFile; // Use original file if signed file is not available
+        } else {
+            alert("No file available to download.");
             return;
         }
 
-        const byteCharacters = atob(signedFile);
-        const byteArrays = [];
+        let downloadBlob;
+        if (base64File instanceof Blob) {
+            downloadBlob = base64File;
+        } else if (typeof base64File === "string") {
+            // Check if the string is a valid base64 string
+            if (base64File.startsWith("data:application/pdf;base64,")) {
+                // Remove the prefix if it exists
+                base64File = base64File.split(",")[1];
+            }
+            try {
+                const byteCharacters = atob(base64File);
+                const byteArrays = [];
+                const sliceSize = 512;
 
-        for (let i = 0; i < byteCharacters.length; i++) {
-            byteArrays.push(byteCharacters.charCodeAt(i));
+                for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+                    const slice = byteCharacters.slice(offset, offset + sliceSize);
+                    const byteNumbers = new Array(slice.length);
+                    for (let i = 0; i < slice.length; i++) {
+                        byteNumbers[i] = slice.charCodeAt(i);
+                    }
+                    byteArrays.push(new Uint8Array(byteNumbers));
+                }
+
+                downloadBlob = new Blob(byteArrays, { type: "application/pdf" });
+            } catch (error) {
+                console.error("Error decoding file:", error);
+                alert("Invalid file format. Cannot download.");
+                return;
+            }
+        } else {
+            alert("Unsupported file format.");
+            return;
         }
 
-        const blob = new Blob([new Uint8Array(byteArrays)], { type: "application/pdf" });
-        const url = URL.createObjectURL(blob);
+        const suffix = signStatus === "completed" && signedFile ? "_signed" : "_original";
+        const fileName = (documentName || "document").replace(/\s+/g, "_") + suffix + ".pdf";
 
+        const url = URL.createObjectURL(downloadBlob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `${documentName || "document"}.pdf`;
+        a.download = fileName;
+
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
+
         URL.revokeObjectURL(url);
     };
+
 
     return (
         <div>
@@ -120,11 +162,13 @@ const MyDocs = () => {
                                                 variant="success"
                                                 size="sm"
                                                 className="me-2"
-                                                onClick={() => handleDownload(doc.documentId, doc.documentName, doc.signedFile)}
-                                                title="Download"
+                                                onClick={() => handleDownload(doc)}
+                                                title={signStatus === "completed" ? "Download signed file" : "Download disabled until signed"}
+                                                disabled={signStatus !== "completed"} 
                                             >
                                                 <FaDownload />
                                             </Button>
+
                                         </div>
                                     </td>
                                 </tr>

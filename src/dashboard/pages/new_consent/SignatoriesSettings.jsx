@@ -18,9 +18,9 @@ const SignatoriesSettings = ({ onNext, onPrevious, onDraft, formData, setFormDat
     const [signatureFields, setSignatureFields] = useState(formData.signatureFields || []);
 
     const [fontSettings, setFontSettings] = useState({
-        fontType: "Arial",
-        fontSize: "14",
-        fontColor: "#000000",
+        fontType: "Arial" || fontSettings.fontType,
+        fontSize: "14" || fontSettings.fontSize,
+        fontColor: "#000000" || fontSettings.fontColor,
     });
     useEffect(() => {
         console.log("Received formData in SignatoriesSettings:", formData);
@@ -49,12 +49,23 @@ const SignatoriesSettings = ({ onNext, onPrevious, onDraft, formData, setFormDat
         updated[index][field] = value;
         setSignatories(updated);
     };
+    // const handleSave = (signatureFields) => {
+    //     setFormData(prev => ({
+    //         ...prev,
+    //         signatureFields // Save the signature fields in formData
+    //     }));
+    // };
     const handleSave = (signatureFields) => {
         setFormData(prev => ({
             ...prev,
-            signatureFields // Save the signature fields in formData
+            signatureFields: signatureFields.map(field => ({
+                ...field,
+                fontSettings: field.fontSettings || fontSettings // Ensure font settings are included
+            }))
         }));
     };
+
+
     const handleSubmit = () => {
         handleSave(signatureFields);
         setFormData(prev => ({
@@ -77,6 +88,7 @@ const SignatoriesSettings = ({ onNext, onPrevious, onDraft, formData, setFormDat
     };
 
     const handleSaveDraft = async () => {
+        handleSave(signatureFields);
         const user = JSON.parse(localStorage.getItem('user'));
         const userEmail = user?.userEmail;
 
@@ -149,16 +161,13 @@ const SignatoriesSettings = ({ onNext, onPrevious, onDraft, formData, setFormDat
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+
     };
-
-
-
     return (
         <>
             <h3><strong>Signatories & Settings</strong></h3>
             <p>Configure who needs to sign and how</p>
 
-            {/* Signatories Section */}
             <Card className="p-4 mb-4">
                 <h5 className=" required-label"><strong>Signatories</strong></h5>
                 {signatories.length === 0 && (
@@ -306,7 +315,7 @@ const SignatoriesSettings = ({ onNext, onPrevious, onDraft, formData, setFormDat
                                 signatureFields={signatureFields}
                                 setSignatureFields={setSignatureFields}
                                 fontSettings={fontSettings}
-                                
+
                             />
 
                         </div>

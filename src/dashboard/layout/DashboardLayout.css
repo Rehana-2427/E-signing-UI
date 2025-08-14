@@ -10,16 +10,16 @@ body {
 }
 
 .navbar {
-    height: 60px;
-    /* Adjust based on your actual navbar height */
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 1000;
-    /* Ensure it's on top */
-    overflow: hidden;
+  grid-area: navbar;
+  position: fixed; /* ✅ MUST be fixed so dropdown isn't clipped */
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  z-index: 1050; /* ✅ Ensure it's on top of everything */
+  background-color: #fff; /* ✅ Optional: ensures dropdown doesn't blend in */
 }
+
 
 .main-layout {
     display: flex;
@@ -60,12 +60,8 @@ body {
   overflow: hidden; /* prevent overall page scrolling */
 }
 
-/* Navbar stays at the top, spanning both columns */
-.navbar {
-  grid-area: navbar;
-  position: sticky;
-  top: 0;
-  z-index: 10;
+.dropdown-menu {
+  z-index: 1050 !important; /* ensure dropdown appears above other content */
 }
 
 /* Sidebar on the left, independently scrollable */

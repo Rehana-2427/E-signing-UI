@@ -1,4 +1,4 @@
-import { Button, Dropdown } from "react-bootstrap";
+import { Button } from "react-bootstrap";
 import { FaBars, FaUser } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import './DashboardLayout.css'; // Custom styles
@@ -55,24 +55,11 @@ const Dashboardnavbar = ({ toggleSidebar }) => {
                     <i className="i-Bell text-muted header-icon" />
                 </div>
 
-                <Dropdown align="end" className="ml-2">
-                    <Dropdown.Toggle
-                        as="span"
-                        id="dropdown-user"
-                        className="cursor-pointer"
-                        onClick={(e) => e.currentTarget.click()} // not recommended, just a fallback
-                    >
-                        <FaUser />
-                    </Dropdown.Toggle>
+                <Link to="/dashboard/profile" className="text-dark" style={{ fontSize: "1.5rem" }}>
+                    <FaUser style={{ cursor: "pointer" }} />
+                </Link>
 
-                    <Dropdown.Menu className="mt-3">
-                        <Dropdown.Item as={Link} to="/profile">Profile</Dropdown.Item>
-                        <Dropdown.Item as={Link} to="/settings">Settings</Dropdown.Item>
-                        <Dropdown.Item as={Link} to="/">Home</Dropdown.Item>
-                        <Dropdown.Divider />
-                        <Dropdown.Item onClick={handleLogout}>Logout</Dropdown.Item>
-                    </Dropdown.Menu>
-                </Dropdown>
+
                 <Button onClick={handleLogout}>Logout</Button>
             </div>
         </div>

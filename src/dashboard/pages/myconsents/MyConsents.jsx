@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { Button, Table } from "react-bootstrap";
 import { AiFillEye, AiOutlineDownload } from "react-icons/ai";
 import { MdEmail } from "react-icons/md";
-import documentApi from "../../api/documentapi";
-import ReminderModal from "./ReminderModal";
+import documentApi from "../../../api/documentapi";
+import ReminderModal from "../ReminderModal";
 
 const MyConsents = () => {
     const [consents, setConsents] = useState([]);

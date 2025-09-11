@@ -309,43 +309,43 @@
 //     }
 
 
-//     // const handleSave = async () => {
-//     //     const pages = containerRef.current?.children;
-//     //     if (!pages?.length || !formData) return;
-//     //     setIsLoading(true); // Start loading
-//     //     const pdf = new jsPDF();
-//     //     for (let i = 0; i < pages.length; i++) {
-//     //         const canvas = await html2canvas(pages[i], { scale: 2, useCORS: true });
-//     //         const imgData = canvas.toDataURL("image/jpeg", 1);
-//     //         const { width: w, height: h } = pdf.getImageProperties(imgData);
-//     //         const pdfW = pdf.internal.pageSize.getWidth();
-//     //         const pdfH = (h * pdfW) / w;
-//     //         if (i) pdf.addPage();
-//     //         pdf.addImage(imgData, "JPEG", 0, 0, pdfW, pdfH);
-//     //     }
+//     const handleSave = async () => {
+//         const pages = containerRef.current?.children;
+//         if (!pages?.length || !formData) return;
+//         setIsLoading(true); // Start loading
+//         const pdf = new jsPDF();
+//         for (let i = 0; i < pages.length; i++) {
+//             const canvas = await html2canvas(pages[i], { scale: 2, useCORS: true });
+//             const imgData = canvas.toDataURL("image/jpeg", 1);
+//             const { width: w, height: h } = pdf.getImageProperties(imgData);
+//             const pdfW = pdf.internal.pageSize.getWidth();
+//             const pdfH = (h * pdfW) / w;
+//             if (i) pdf.addPage();
+//             pdf.addImage(imgData, "JPEG", 0, 0, pdfW, pdfH);
+//         }
 
-//     //     const pdfBlob = pdf.output("blob");
-//     //     const pdfFile = new File([pdfBlob], "edited.pdf", { type: "application/pdf" });
+//         const pdfBlob = pdf.output("blob");
+//         const pdfFile = new File([pdfBlob], "edited.pdf", { type: "application/pdf" });
 
-//     //     const data = new FormData();
-//     //     data.append("title", formData.title);
-//     //     data.append("signRequiredBy", new Date(formData.signRequiredBy).toISOString().split("T")[0]);
-//     //     data.append("termsType", formData.termsOption);
-//     //     data.append("termsLink", formData.termsOfSigning || "");
-//     //     data.append("pdf", pdfFile);
-//     //     data.append("signers", JSON.stringify(formData.signers));
-//     //     data.append("senderEmail", userEmail);
+//         const data = new FormData();
+//         data.append("title", formData.title);
+//         data.append("signRequiredBy", new Date(formData.signRequiredBy).toISOString().split("T")[0]);
+//         data.append("termsType", formData.termsOption);
+//         data.append("termsLink", formData.termsOfSigning || "");
+//         data.append("pdf", pdfFile);
+//         data.append("signers", JSON.stringify(formData.signers));
+//         data.append("senderEmail", userEmail);
 
-//     //     try {
-//     //         const resp = await documentApi.saveDocument(data);
+//         try {
+//             const resp = await documentApi.saveDocument(data);
 
-//     //         toast.success("✅ Document sent successfully!");
-//     //     } catch (err) {
-//     //         toast.error("❌ Failed to send document");
-//     //     } finally {
-//     //         setIsLoading(false); // ✅ Always stop loading
-//     //     }
-//     // };
+//             toast.success("✅ Document sent successfully!");
+//         } catch (err) {
+//             toast.error("❌ Failed to send document");
+//         } finally {
+//             setIsLoading(false); // ✅ Always stop loading
+//         }
+//     };
 
 
 //     const scrollToPage = (index) => {

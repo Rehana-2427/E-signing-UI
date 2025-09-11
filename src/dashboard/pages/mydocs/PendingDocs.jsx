@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Button, Table } from "react-bootstrap";
-import { FaDownload, FaEnvelope, FaEye } from "react-icons/fa";
+import { FaEnvelope, FaEye } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-import signerApi from "../../api/signerapi";
+import signerApi from "../../../api/signerapi";
 
-const MyDocs = () => {
+const PendingDocs = () => {
     const [docs, setDocs] = useState([]);
     const user = JSON.parse(localStorage.getItem("user"));
     const userEmail = user?.userEmail;
@@ -20,15 +20,16 @@ const MyDocs = () => {
                 });
         }
     }, [userEmail]);
-    const handleView = (documentId, documentName, signedFile) => {
+    const handleView = (documentId, documentName, signedFile, fromTab) => {
         if (!documentId || !documentName || !userEmail) return;
-
+        localStorage.setItem("docsActiveTab", fromTab);
         navigate("/dashboard/my-docs/view", {
             state: {
                 documentId: documentId,
                 documentName: documentName,
                 userEmail: userEmail,
                 signedFile: signedFile,
+                fromTab: fromTab
             },
         });
     };
@@ -144,7 +145,7 @@ const MyDocs = () => {
                                                 variant="primary"
                                                 size="sm"
                                                 className="me-2"
-                                                onClick={() => handleView(doc.documentId, doc.documentName, doc.signedFile)}
+                                                onClick={() => handleView(doc.documentId, doc.documentName, doc.signedFile, "pending")}
                                                 title="View"
                                             >
                                                 <FaEye />
@@ -158,17 +159,16 @@ const MyDocs = () => {
                                             >
                                                 <FaEnvelope />
                                             </Button>
-                                            <Button
+                                            {/* <Button
                                                 variant="success"
                                                 size="sm"
                                                 className="me-2"
                                                 onClick={() => handleDownload(doc)}
                                                 title={signStatus === "completed" ? "Download signed file" : "Download disabled until signed"}
-                                                disabled={signStatus !== "completed"} 
+                                                disabled={signStatus !== "completed"}
                                             >
                                                 <FaDownload />
-                                            </Button>
-
+                                            </Button> */}
                                         </div>
                                     </td>
                                 </tr>
@@ -184,7 +184,4 @@ const MyDocs = () => {
 };
 
 
-
-
-
-export default MyDocs;
+export default PendingDocs

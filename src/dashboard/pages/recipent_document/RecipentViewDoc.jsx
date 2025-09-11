@@ -19,7 +19,7 @@ const RecipentViewDoc = () => {
     const location = useLocation();
     const user = JSON.parse(localStorage.getItem("user"));
     const userEmail = user?.userEmail;
-    const { documentId, recipientEmail, documentName, signedFile } = location.state || {};
+    const { documentId, recipientEmail, documentName, signedFile, fromTab } = location.state || {};
     const [signatureFields, setSignatureFields] = useState([]); // Stores all placed fields (image or text)
     const [generatedSignatures, setGeneratedSignatures] = useState([]); // From GenerateSignatureField (images)
     const [signatureMode, setSignatureMode] = useState("draw");
@@ -38,7 +38,6 @@ const RecipentViewDoc = () => {
     const [saveDraft, setSaveDraft] = useState(false);
     const [viewportInfo, setViewportInfo] = useState(null);
     const navigate = useNavigate();
-
 
     // useEffect(() => {
     //     setLoading(true);
@@ -840,6 +839,10 @@ const RecipentViewDoc = () => {
         }
     };
 
+    const handleBack = () => {
+        navigate("/dashboard/my-docs");
+    }
+
 
     return (
         <div style={{ padding: "20px" }}>
@@ -847,12 +850,15 @@ const RecipentViewDoc = () => {
                 <span style={{ display: 'inline-flex', gap: '8px' }}>
                     <h1><strong>My-docs {documentName} </strong></h1>&nbsp; &nbsp;
 
-                    <Button onClick={handleSaveDraft} variant="secondary">
-                        {saveDraft ? "Saving draft..." : "Save Draft"}
-                    </Button>
+
                     <Button onClick={handleSave} disabled={saving}>
                         {saving ? "Sending..." : "Send"}
                     </Button>
+                    <Button onClick={handleSaveDraft} variant="secondary">
+                        {saveDraft ? "Saving draft..." : "Save Draft"}
+                    </Button>
+                    <Button onClick={handleBack}>Back</Button>
+
                 </span>
             </p>
             <ToastContainer position="top-right" autoClose={3000} />

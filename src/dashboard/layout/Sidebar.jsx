@@ -2,7 +2,9 @@ import React, { useEffect, useRef, useState } from "react";
 import { Nav } from "react-bootstrap";
 import {
     FaAddressBook,
+    FaBook,
     FaFileAlt,
+    FaFileContract,
     FaFolderOpen,
     FaPlusCircle,
     FaTachometerAlt,
@@ -49,25 +51,30 @@ const Sidebar = () => {
         { to: "/dashboard", label: "Dashboard", icon: <FaTachometerAlt size={30} /> },
         { to: "/dashboard/my-consents", label: "My Consents & Agreements", icon: <FaFileAlt size={30} /> },
         { to: "/dashboard/new-consent", label: "New Consent", icon: <FaPlusCircle size={30} /> },
+         { to: "/dashboard/audit-trail", label: "Audit Trail", icon: <FaFileContract size={30} /> },
         { to: "/dashboard/my-docs", label: "My Docs", icon: <FaFolderOpen size={30} /> },
         { to: "/dashboard/contacts", label: "Contacts", icon: <FaAddressBook size={30} /> },
+        { to: "/dashboard/creditPassBook", label: "Credit PassBook", icon: <FaBook size={30} /> },
         { to: "/dashboard/profile", label: "Profile", icon: <FaUser size={30} /> }
     ];
 
     const handleLinkClick = (to) => {
-        if (to === activeLink) {
-            return;
-        }
         setActiveLink(to);
-        sessionStorage.setItem('scrollPosition', scrollContainerRef.current.scrollTop);
-        navigate(to, { state: { userName } });
+
+        if (location.pathname === to) {
+            navigate(to, { state: { userName, refresh: Date.now() } });
+        } else {
+            navigate(to, { state: { userName } });
+        }
     };
+
 
     const isLinkActive = (link) => {
         const currentPath = location.pathname;
 
         const specialCases = {
-            '/dashboard/my-docs': '/dashboard/my-docs/view'
+            '/dashboard/my-docs': '/dashboard/my-docs/view',
+            '/dashboard/creditPassBook':'/dashboard/creditPassBook/transaction-history'
         }
         for (const [key, basePath] of Object.entries(specialCases)) {
             if (link.to === key && currentPath.startsWith(basePath)) {

@@ -18,6 +18,9 @@ const adminApi = {
     getCreditHistory: () =>
         apiClient.get("/creditHistory"),
 
+    getUserCreditList:() =>
+        apiClient.get("/allUsersCredits"),
+
 };
 
 export default adminApi;

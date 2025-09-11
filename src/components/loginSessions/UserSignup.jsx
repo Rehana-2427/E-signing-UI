@@ -2,7 +2,7 @@ import { Formik } from "formik";
 import { useEffect, useState } from "react";
 import { Button, Card, Col, Modal, Row } from "react-bootstrap";
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import Swal from 'sweetalert2';
 import * as yup from "yup";
@@ -151,6 +151,44 @@ const UserSignup = () => {
         }
     }, [passwordCriteriaError]);
 
+
+    // const handleGoogleLogin = async (credentialResponse) => {
+    //     const idToken = credentialResponse.credential;
+
+    //     try {
+    //         const response = await  authapi.googleLogin(idToken);
+    //         Swal.fire({
+    //             title: 'Registration Successful!',
+    //             text: 'You have signed in with Google successfully.',
+    //             icon: 'success',
+    //             confirmButtonText: 'Continue to Dashboard'
+    //         }).then(() => {
+    //             window.location.href = "/dashboard";
+    //         });
+    //     } catch (error) {
+    //         toast.error("Google sign-in failed");
+    //         console.error(error);
+    //     }
+    // };
+    const handleGoogleLogin = async (credentialResponse) => {
+        const idToken = credentialResponse.credential;
+
+        try {
+            const response = await authapi.googleLogin(idToken);
+            const jwtToken = response.data.token;
+
+            // ✅ Store JWT
+            localStorage.setItem("token", jwtToken);
+
+            // ✅ Directly go to dashboard (no registration page)
+            window.location.href = "/dashboard";
+
+        } catch (error) {
+            toast.error("Google sign-in failed");
+            console.error(error);
+        }
+    };
+
     return (
         <div className="auth-layout-wrap">
             <div className="auth-content">
@@ -166,10 +204,17 @@ const UserSignup = () => {
                                     <SocialButtons
                                         isLogin
                                         routeUrl="/signin"
-                                        googleHandler={() => alert("Google login")}
-                                        facebookHandler={() => alert("Facebook login")}
+                                        googleHandler={handleGoogleLogin}
+                                    // facebookHandler={() => alert("Facebook login")}
                                     />
+                                    <p>
+                                        If already have account?{" "}
+                                        <Link to="/signin" state={{ pass: recipientEmail }}>
+                                            Login here
+                                        </Link>
+                                    </p>
                                 </div>
+
                             </div>
                         </Col>
                         <Col md={6}>

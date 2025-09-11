@@ -1,4 +1,5 @@
 import { Form, Formik } from "formik";
+import Cookies from 'js-cookie';
 import { useState } from "react";
 import { Card, Col, Row } from "react-bootstrap";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
@@ -8,7 +9,6 @@ import * as yup from 'yup';
 import api from "../../api/authapi";
 import SocialButtons from "../sessions/SocialButtons";
 import TextField from "../sessions/TextField";
-
 const Signin = () => {
 
     const navigate = useNavigate();
@@ -50,6 +50,7 @@ const Signin = () => {
             // Save to localStorage
             localStorage.setItem('token', token);
             localStorage.setItem('user', JSON.stringify(user));
+            Cookies.set('userName', user.userName, { expires: 7 });
             setSuccessMessage(response.data.successMessage || "Login successful!");
 
             console.log(user.userName)
@@ -79,7 +80,7 @@ const Signin = () => {
 
     console.log(recipientEmail)
 
-    console.log(documentId, documentName , senderName)
+    console.log(documentId, documentName, senderName)
     return (
         <div className="auth-layout-wrap">
             <div className="auth-content">

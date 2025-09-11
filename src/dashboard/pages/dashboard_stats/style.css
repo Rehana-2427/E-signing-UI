@@ -1,0 +1,40 @@
+.dashboard {
+    height: 100vh;
+    /* Full screen height */
+    overflow-y: auto;
+    /* Enable vertical scrolling */
+    padding: 20px;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+
+    /* Hide scrollbar but allow scrolling */
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE 10+ */
+}
+
+.dashboard::-webkit-scrollbar {
+    width: 0px;
+    /* Chrome, Safari */
+    background: transparent;
+}
+
+.statsgraph {
+    top: 0;
+    left: 0;
+    z-index: 1000;
+
+    /* Hide scrollbar but allow scrolling */
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE 10+ */
+}
+
+.statsgraph::-webkit-scrollbar {
+    width: 0px;
+    /* Chrome, Safari */
+    background: transparent;
+}

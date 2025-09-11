@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Button, Table } from "react-bootstrap";
 import { AiFillEye, AiOutlineDownload } from "react-icons/ai";
 import { MdEmail } from "react-icons/md";
-import documentApi from "../../api/documentapi";
+import documentApi from "../../../api/documentapi";
 
 const Drafts = () => {
   const [consents, setConsents] = useState([]);

@@ -7,6 +7,16 @@ const apiClient = axios.create({
     withCredentials: true,
 });
 
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem('jwtToken');
+  if (token) {
+    config.headers['Authorization'] = `Bearer ${token}`;
+  }
+  return config;
+}, (error) => {
+  return Promise.reject(error);
+});
+
 const documentApi = {
     saveDocument: (formData) => {
         return apiClient.post('/save-document', formData, {

@@ -16,6 +16,9 @@ const signerApi = {
     getDocumentsByEmail: (email) =>
         apiClient.get("/documents-by-email", { params: { email } }),
 
+    getCompletedDocumentsByEmail: (email) =>
+        apiClient.get("/completedDocs", { params: { email } }),
+
     getSignersContact: (senderEmail) =>
         apiClient.get("/signersContact", { params: { senderEmail } }),
 

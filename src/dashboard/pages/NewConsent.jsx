@@ -1,15 +1,35 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import adminUserCreditApi from "../../api/adminUserCreditApi";
 import DocumentDetails from "./new_consent/DocumentDetails";
-import PaymentSend from "./new_consent/PaymentSend"; // <-- Make sure to import it
+import PaymentSend from "./new_consent/PaymentSend";
 import SignatoriesSettings from "./new_consent/SignatoriesSettings";
 
 const NewConsent = () => {
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({});
   const [signatureFields, setSignatureFields] = useState(formData.signatureFields || []);
+  const [userCredit, setUserCredit] = useState(null);
 
-  const handleNext = () => setStep(prev => prev + 1);
-  const handlePrevious = () => setStep(prev => prev - 1);
+  const user = JSON.parse(localStorage.getItem("user"));
+  const userEmail = user?.userEmail;
+
+  useEffect(() => {
+    if (userEmail) {
+      adminUserCreditApi
+        .getUserCreditsByEmail(userEmail)
+        .then((res) => {
+          setUserCredit(res.data);
+        })
+        .catch((err) => {
+          console.error("Error fetching credit info", err);
+        });
+    }
+  }, [userEmail]);
+
+  const handleNext = () => setStep((prev) => prev + 1);
+  const handlePrevious = () => setStep((prev) => prev - 1);
 
   return (
     <>
@@ -21,6 +41,7 @@ const NewConsent = () => {
           onNext={handleNext}
           formData={formData}
           setFormData={setFormData}
+          userCredit={userCredit}
         />
       )}
 
@@ -30,8 +51,8 @@ const NewConsent = () => {
           onPrevious={handlePrevious}
           formData={formData}
           setFormData={setFormData}
-          signatureFields={signatureFields} // Pass signatureFields
-          setSignatureFields={setSignatureFields} // Pass setSignatureFields
+          signatureFields={signatureFields}
+          setSignatureFields={setSignatureFields}
         />
       )}
 

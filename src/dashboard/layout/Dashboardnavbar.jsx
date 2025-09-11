@@ -20,6 +20,14 @@ const Dashboardnavbar = ({ toggleSidebar }) => {
         localStorage.clear();
         navigate('/');
     };
+
+    const goToHome = () => {
+        const isLocalhost = window.location.hostname === "localhost";
+        window.location.href = isLocalhost
+            ? "http://localhost:3035"
+            : "https://signbook.co";
+    }
+
     return (
         <div className="navbar navbar-expand-lg navbar-light shadow-sm px-3 ">
 
@@ -59,7 +67,7 @@ const Dashboardnavbar = ({ toggleSidebar }) => {
                     <FaUser style={{ cursor: "pointer" }} />
                 </Link>
 
-
+                <Button onClick={goToHome}>Go to Home</Button>
                 <Button onClick={handleLogout}>Logout</Button>
             </div>
         </div>

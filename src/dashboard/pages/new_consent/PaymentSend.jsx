@@ -3,6 +3,7 @@ import { Button, Card, Form, Spinner } from "react-bootstrap";
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import adminApi from "../../../api/adminApi";
+import adminUserCreditApi from "../../../api/adminUserCreditApi";
 import documentApi from "../../../api/documentapi";
 
 const PaymentSend = ({ onPrevious, formData, setFormData, setSignatureFields, signatureFields }) => {
@@ -18,6 +19,20 @@ const PaymentSend = ({ onPrevious, formData, setFormData, setSignatureFields, si
     const [totalCredits, setTotalCredits] = useState(0);
     const [confirmSend, setConfirmSend] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [userCredits, setUserCredits] = useState([]);
+
+    useEffect(() => {
+        fetchUserCredits();
+    }, []);
+
+    const fetchUserCredits = async () => {
+        try {
+            const response = await adminUserCreditApi.getUserCreditsByEmail(userEmail);
+            setUserCredits(response.data);
+        } catch (error) {
+            console.error("Error fetching user credits", error);
+        }
+    };
 
     // Fetch cost settings from admin API
     useEffect(() => {
@@ -46,10 +61,20 @@ const PaymentSend = ({ onPrevious, formData, setFormData, setSignatureFields, si
             });
     }, [userEmail]);
 
+    // Credit cost calculations
     const documentCharge = docCost;
     const signatoryCharge = signCost * signatoryCount;
-    const totalCharge =  signatoryCharge + totalCredits;
-    const balanceCredits = documentCharge - totalCharge;
+    const usedCredits = totalCredits || 0;
+    const balancedCredits = documentCharge - signatoryCharge - usedCredits;
+
+
+    const creditDeduction = 20;
+    const originalBalance = userCredits?.balanceCredit || 0;
+    const originalUsed = userCredits?.usedCredit || 0;
+    const creditsBought = userCredits?.creditBought || 0;
+
+    const predictedBalance = originalBalance - creditDeduction;
+    const predictedUsed = originalUsed + creditDeduction;
 
     const handleConfirmSend = async () => {
         setIsLoading(true);
@@ -80,7 +105,37 @@ const PaymentSend = ({ onPrevious, formData, setFormData, setSignatureFields, si
         formDataToSend.append("file", formData.editedPdfBlob || formData.file);
 
         try {
-            await documentApi.saveDocument(formDataToSend);
+            const saveResponse = await documentApi.saveDocument(formDataToSend);
+
+            if (originalBalance < creditDeduction) {
+                Swal.fire('Insufficient Credits', 'You do not have enough credits to send this document.', 'error');
+                setIsLoading(false);
+                return;
+            }
+
+            // Update credits in backend
+            await adminUserCreditApi.updateUserCredits(userEmail, {
+                balanceCredit: predictedBalance,
+                usedCredit: predictedUsed
+            });
+
+            // Save transaction
+            await adminUserCreditApi.saveCreditTransaction({
+                userEmail,
+                usedCredits: predictedUsed,
+                balanceCredits: predictedBalance,
+                creditsBought,
+                date: new Date().toISOString(),
+                documentId: saveResponse.data.documentId,
+                documentName: formData.documentName
+            });
+
+            // Update local state to reflect new credit status
+            setUserCredits(prev => ({
+                ...prev,
+                balanceCredit: predictedBalance,
+                usedCredit: predictedUsed
+            }));
 
             Swal.fire({
                 title: 'Success!',
@@ -109,12 +164,23 @@ const PaymentSend = ({ onPrevious, formData, setFormData, setSignatureFields, si
             <p>Confirm the charges before sending the document for signing.</p>
 
             <div className="mb-4">
-                <p><strong>Document Charges:</strong> {docCost} credits</p>
+                <h4>Charges Summary</h4>
+                <p><strong>Document Charges:</strong> {documentCharge} credits</p>
                 <p><strong>Signatory Charges:</strong> {signatoryCount} × {signCost} = {signatoryCharge} credits</p>
-                <hr />
-                <p><strong>used Credits:</strong> {totalCredits}</p>
-                <p><strong>Total Charges:</strong> {totalCharge} credits </p>
-                <p><strong>Balance After Sending:</strong> {balanceCredits} credits</p>
+                <p><strong>Previously Used Credits:</strong> {usedCredits}</p>
+                <p>
+                    <strong>Balanced Credits (remaining):</strong> {balancedCredits}
+                </p>
+            </div>
+
+            <div className="mb-4">
+                <h4>Credits Summary</h4>
+                <p><strong>Credit Deduction for the document:</strong> {creditDeduction}</p>
+                <p>
+                    <strong>Total credits:</strong> {creditsBought} &nbsp;||&nbsp;
+                    <strong>Balance credits:</strong> {predictedBalance} &nbsp;||&nbsp;
+                    <strong>Used Credits:</strong> {predictedUsed}
+                </p>
             </div>
 
             <Form.Check

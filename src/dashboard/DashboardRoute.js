@@ -7,12 +7,16 @@ import SenderDocs from "./SenderDocs";
 import SignatureDocuments from "./SignatureDocuments";
 import SignedDocument from "./SignedDocument";
 import DashboardLayout from "./layout/DashboardLayout";
-import Consents from "./pages/Consents";
 import Contacts from "./pages/Contacts";
-import Dashboard from "./pages/Dashboard";
-import MyDocs from "./pages/MyDocs";
+import Dashboard from "./pages/dashboard_stats/Dashboard";
+
+import AuditTrail from "./pages/AuditTrail";
+import CreditPassBook from "./pages/CreditPassBook";
+import CreditTransactionSummary from "./pages/CreditTransactionSummary";
 import NewConsent from "./pages/NewConsent";
 import Profile from "./pages/Profile";
+import Consents from "./pages/myconsents/Consents";
+import MyDocs from "./pages/mydocs/MyDocs";
 import RecipentViewDoc from "./pages/recipent_document/RecipentViewDoc";
 
 const DashboardRoute = () => {
@@ -29,9 +33,12 @@ const DashboardRoute = () => {
         <Route path="/pdf-viewer" element={<SignatureDocuments />} />
         <Route path="/my-consents" element={<Consents />} />
         <Route path="/new-consent" element={<NewConsent />} />
+        <Route path="/audit-trail" element={<AuditTrail />} />
         <Route path="/my-docs" element={<MyDocs />} />
         <Route path="/my-docs/view" element={<RecipentViewDoc />} />
         <Route path="/contacts" element={<Contacts />} />
+         <Route path="/creditPassBook" element={<CreditPassBook />} />
+         <Route path="/creditPassBook/transaction-history" element={<CreditTransactionSummary />} />
         <Route path="/profile" element={<Profile />} />
       </Route>
     </Routes>

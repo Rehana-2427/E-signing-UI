@@ -22,6 +22,8 @@ const Credits = () => {
       await adminApi.saveCreditSettings(docCost, signCost);
       setShowToast(true);
       fetchCreditHistory();
+      setDocCost(0);       
+      setSignCost(0);
     } catch (error) {
       console.error("Error saving settings");
     }

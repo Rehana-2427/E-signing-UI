@@ -59,6 +59,12 @@ const documentApi = {
         })
     },
 
+    getSignerAudit : (documentId) => {
+        return apiClient.get('/signers',{
+            params:{documentId}
+        })
+    },
+
 };
 
 export default documentApi;

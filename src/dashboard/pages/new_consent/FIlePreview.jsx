@@ -292,6 +292,20 @@ const FilePreview = ({ file, setSelectedField, signingMode, signatories, onPdfEd
                                     e.stopPropagation();
                                 };
 
+                                if (!signatureFields) {
+                                    field.addEventListener("mousedown", onMouseDownHandler);
+                                }
+
+                                saveIcon.addEventListener("click", () => {
+                                    field.contentEditable = false;
+                                    wrapper.style.cursor = "default";
+                                    [saveIcon, deleteIcon, editIcon].forEach(icon => {
+                                        if (icon && icon.parentNode) icon.parentNode.removeChild(icon);
+                                    });
+                                    field.removeEventListener("mousedown", onMouseDownHandler);
+                                });
+
+
                                 wrapper.appendChild(nameDiv);
                                 wrapper.appendChild(field);
                                 wrapper.appendChild(deleteIcon);
@@ -663,8 +677,8 @@ const FilePreview = ({ file, setSelectedField, signingMode, signatories, onPdfEd
                         x: dropX,
                         y: dropY,
                         pageIndex: i - 1,
-                        saved: false, 
-                        fontSettings:fontSettings
+                        saved: false,
+                        fontSettings: fontSettings
                     };
                     setSignatureFields((prev) => [...prev, fieldData]);
                 });

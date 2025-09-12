@@ -15,12 +15,13 @@ const StatsGraph = () => {
                 const response = await consentAPi.getMonthlyStats(userEmail);
                 const monthlyData = response.data;
 
-                const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"];
+                const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
                 const documentsSent = new Array(12).fill(0);
                 const documentsReceived = new Array(12).fill(0);
 
                 monthlyData.forEach((item) => {
-                    const index = months.findIndex((m) => m.toLowerCase() === item.month.toLowerCase());
+                    const monthLower = item.month.toLowerCase();
+                    const index = months.findIndex(m => m.toLowerCase().startsWith(monthLower));
                     if (index !== -1) {
                         documentsSent[index] = item.totalSentConsents || 0;
                         documentsReceived[index] = item.totalReceivedConsents || 0;
@@ -109,7 +110,7 @@ const StatsGraph = () => {
                         ]
                     });
                 } else {
-                    setChartOptions(null); // Clear chart
+                    setChartOptions(null);
                 }
             } catch (error) {
                 console.error("Error fetching consent stats:", error);
@@ -123,7 +124,7 @@ const StatsGraph = () => {
     return (
         <div className="statsgraph">
             <h4><strong>Usage Statistics</strong></h4>
-            <p>Monthly Stats: Consents & Docs</p>
+            <p>Monthly Stats: Total consents you sent and total documents you received</p>
             {chartOptions && hasData ? (
                 <ReactECharts option={chartOptions} />
             ) : !hasData ? (

@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { Button, Table } from "react-bootstrap";
 import { AiFillEye, AiOutlineDownload } from "react-icons/ai";
 import { MdEmail } from "react-icons/md";
+import { useNavigate } from "react-router-dom";
 import documentApi from "../../../api/documentapi";
 import ReminderModal from "../ReminderModal";
 
 const MyConsents = () => {
+    const navigate = useNavigate();
     const [consents, setConsents] = useState([]);
     const [loading, setLoading] = useState(true);
     const user = JSON.parse(localStorage.getItem('user'));
@@ -52,9 +54,10 @@ const MyConsents = () => {
                     <tr>
                         <th>Document Name</th>
                         <th>Sent On</th>
-                        <th>Signed On</th>
+                        {/* <th>Signed On</th> */}
                         <th># of People</th>
                         <th>Actions</th>
+                        <th>Audit Trail</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -68,7 +71,7 @@ const MyConsents = () => {
                                 <td>{consent.documentName}</td>
                                 <td>{consent.sentOn}</td>
 
-                                <td>{consent.signedOn || "Not signed yet"}</td>
+                                {/* <td>{consent.signedOn || "Not signed yet"}</td> */}
                                 <td>{consent.signedCount} / {consent.totalSigners}</td>
                                 <td>
                                     <Button variant="primary" size="sm" className="me-2" title="View">
@@ -85,7 +88,11 @@ const MyConsents = () => {
                                     >
                                         <MdEmail />
                                     </Button>
-
+                                </td>
+                                <td>
+                                    <Button onClick={() => navigate(`/dashboard/my-consents/audit-trail?documentId=${consent.documentId}`)}>
+                                        Audit Trail
+                                    </Button>
                                 </td>
                             </tr>
                         ))

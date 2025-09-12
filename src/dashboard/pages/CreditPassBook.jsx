@@ -20,6 +20,9 @@ const CreditPassBook = () => {
         requestedCredits: parseInt(requestedCredits, 10),
       };
       const response = await adminUserCreditApi.requestUserCredits(message);
+      setShowToast(true);
+      setRequestedCredits("");
+      setShowRequestForm(false);
       console.log('Credit request submitted:', response.data);
     } catch (error) {
       console.error('Error submitting credit request:', error);
@@ -79,7 +82,6 @@ const CreditPassBook = () => {
         </Card>
       )}
 
-      {/* ✅ Toast Notification */}
       <ToastContainer position="top-end" className="p-3">
         <Toast onClose={() => setShowToast(false)} show={showToast} delay={3000} autohide bg="success">
           <Toast.Header>

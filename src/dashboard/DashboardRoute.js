@@ -33,7 +33,7 @@ const DashboardRoute = () => {
         <Route path="/pdf-viewer" element={<SignatureDocuments />} />
         <Route path="/my-consents" element={<Consents />} />
         <Route path="/new-consent" element={<NewConsent />} />
-        <Route path="/audit-trail" element={<AuditTrail />} />
+        <Route path="/my-consents/audit-trail" element={<AuditTrail />} />
         <Route path="/my-docs" element={<MyDocs />} />
         <Route path="/my-docs/view" element={<RecipentViewDoc />} />
         <Route path="/contacts" element={<Contacts />} />

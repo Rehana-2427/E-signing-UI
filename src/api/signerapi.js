@@ -25,6 +25,18 @@ const signerApi = {
     getSignersByDocumentId: (documentId) =>
         apiClient.get(`/documents/${documentId}/signers`),
 
+    getSearchPendingDocumentsByEmail : (email, query = "") => {
+        return apiClient.get('/searchPendingDocs',{
+            params:{email, query}
+        })
+    },
+
+     getSearchCompletedDocumentsByEmail : (email, query = "") => {
+        return apiClient.get('/searchcompletedDocs',{
+            params:{email, query}
+        })
+    },
+
 };
 
 export default signerApi;

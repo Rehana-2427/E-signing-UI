@@ -1,25 +1,48 @@
+import { debounce } from "lodash";
 import { useEffect, useState } from "react";
 import { Button, Table } from "react-bootstrap";
 import { FaEnvelope, FaEye } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import signerApi from "../../../api/signerapi";
+import SearchBar from "../SearchBar";
 
 const PendingDocs = () => {
     const [docs, setDocs] = useState([]);
     const user = JSON.parse(localStorage.getItem("user"));
     const userEmail = user?.userEmail;
     const navigate = useNavigate();
+    const [searchQuery, setSearchQuery] = useState("");
+    const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState(""); // track the last submitted search
+
     useEffect(() => {
-        if (userEmail) {
-            signerApi.getDocumentsByEmail(userEmail)
-                .then((res) => {
-                    setDocs(res.data);
-                })
-                .catch((err) => {
-                    console.error("Failed to fetch documents", err);
-                });
-        }
-    }, [userEmail]);
+        const fetchPendingDocs = async (query) => {
+            setLoading(true);
+            try {
+                let response;
+                if (query && query.trim() !== "") {
+                    response = await signerApi.getSearchPendingDocumentsByEmail(userEmail, query);
+                } else {
+                    response = await signerApi.getDocumentsByEmail(userEmail);
+                }
+                setDocs(response.data || []);
+            } catch (error) {
+                console.error("Failed to fetch consents:", error);
+                setDocs([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        const debouncedFetch = debounce(fetchPendingDocs, 300);
+
+        debouncedFetch(searchQuery);
+
+        return () => {
+            debouncedFetch.cancel();
+        };
+    }, [userEmail, searchTerm]);
+
     const handleView = (documentId, documentName, signedFile, fromTab) => {
         if (!documentId || !documentName || !userEmail) return;
         localStorage.setItem("docsActiveTab", fromTab);
@@ -103,12 +126,23 @@ const PendingDocs = () => {
 
         URL.revokeObjectURL(url);
     };
+    const handleSearch = () => {
+        setSearchTerm(searchQuery.trim()); // set searchTerm to trigger search
+    };
 
-
+    if (loading) return <p>Loading pending Docs...</p>;
     return (
         <div>
-            <h1><strong>My Docs</strong></h1>
-
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+                <div style={{ width: '250px' }}>
+                    <SearchBar
+                        placeholder="Search pending Docs..."
+                        searchQuery={searchQuery}
+                        setSearchQuery={setSearchQuery}
+                        onSearch={handleSearch}
+                    />
+                </div>
+            </div>
             <Table hover>
                 <thead>
                     <tr style={{ background: "#f0f0f0" }}>

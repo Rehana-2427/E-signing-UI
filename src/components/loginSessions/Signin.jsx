@@ -50,8 +50,19 @@ const Signin = () => {
             // Save to localStorage
             localStorage.setItem('token', token);
             localStorage.setItem('user', JSON.stringify(user));
-            Cookies.set('userName', user.userName, { expires: 7 });
-            setSuccessMessage(response.data.successMessage || "Login successful!");
+            const isLocalhost = window.location.hostname === 'localhost';
+
+            // Set cookies for userName, userEmail, and token
+            const cookieOptions = {
+                expires: 7,
+                domain: isLocalhost ? undefined : '.signbook.co', // omit domain on localhost
+                secure: !isLocalhost,                             // secure=true only on production HTTPS
+                sameSite: isLocalhost ? 'Lax' : 'None'            // Lax on localhost, None on prod for cross-site
+            };
+
+            Cookies.set('userName', user.userName, cookieOptions);
+            Cookies.set('userEmail', user.userEmail, cookieOptions);  // <-- added userEmail
+            Cookies.set('token', token, cookieOptions); setSuccessMessage(response.data.successMessage || "Login successful!");
 
             console.log(user.userName)
             if (recipientEmail) {

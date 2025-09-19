@@ -65,6 +65,16 @@ const documentApi = {
         })
     },
 
+    getSearchSentConsensts : (senderEmail, query = "") => {
+        return apiClient.get('/searchSentConsensts',{
+            params:{senderEmail, query}
+        })
+    },
+    getSearchDraftsConsensts : (senderEmail, query = "")  => {
+         return apiClient.get('/searchDraftConsensts',{
+            params:{senderEmail, query }
+        })
+    }
 };
 
 export default documentApi;

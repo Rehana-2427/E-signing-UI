@@ -4,6 +4,7 @@ import {
     FaAddressBook,
     FaBook,
     FaFileAlt,
+    FaFilePdf,
     FaFolderOpen,
     FaPlusCircle,
     FaTachometerAlt,
@@ -48,8 +49,9 @@ const Sidebar = () => {
 
     const navLinks = [
         { to: "/dashboard", label: "Dashboard", icon: <FaTachometerAlt size={30} /> },
-        { to: "/dashboard/my-consents", label: "My Consents & Agreements", icon: <FaFileAlt size={30} /> },
         { to: "/dashboard/new-consent", label: "New Consent", icon: <FaPlusCircle size={30} /> },
+        { to: "/dashboard/my-consents", label: "My Consents & Agreements", icon: <FaFileAlt size={30} /> },
+        { to: "/dashboard/templates", label: "Templates", icon: <FaFilePdf size={30} /> },
         //  { to: "/dashboard/audit-trail", label: "Audit Trail", icon: <FaFileContract size={30} /> },
         { to: "/dashboard/my-docs", label: "My Docs", icon: <FaFolderOpen size={30} /> },
         { to: "/dashboard/contacts", label: "Contacts", icon: <FaAddressBook size={30} /> },
@@ -73,8 +75,10 @@ const Sidebar = () => {
 
         const specialCases = {
             '/dashboard/my-docs': '/dashboard/my-docs/view',
-            '/dashboard/creditPassBook':'/dashboard/creditPassBook/transaction-history',
-            '/dashboard/my-consents':'/dashboard/my-consents/audit-trail'
+            '/dashboard/creditPassBook': '/dashboard/creditPassBook/transaction-history',
+            '/dashboard/my-consents': '/dashboard/my-consents/audit-trail',
+            '/dashboard/templates':'/dashboard/templates/edit-template'
+
         }
         for (const [key, basePath] of Object.entries(specialCases)) {
             if (link.to === key && currentPath.startsWith(basePath)) {

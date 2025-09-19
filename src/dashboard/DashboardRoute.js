@@ -18,6 +18,8 @@ import Profile from "./pages/Profile";
 import Consents from "./pages/myconsents/Consents";
 import MyDocs from "./pages/mydocs/MyDocs";
 import RecipentViewDoc from "./pages/recipent_document/RecipentViewDoc";
+import EditTemplate from "./pages/templates/EditTemplate";
+import Templates from "./pages/templates/Templates";
 
 const DashboardRoute = () => {
   return (
@@ -37,9 +39,11 @@ const DashboardRoute = () => {
         <Route path="/my-docs" element={<MyDocs />} />
         <Route path="/my-docs/view" element={<RecipentViewDoc />} />
         <Route path="/contacts" element={<Contacts />} />
-         <Route path="/creditPassBook" element={<CreditPassBook />} />
-         <Route path="/creditPassBook/transaction-history" element={<CreditTransactionSummary />} />
+        <Route path="/creditPassBook" element={<CreditPassBook />} />
+        <Route path="/creditPassBook/transaction-history" element={<CreditTransactionSummary />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path='/templates' element={<Templates />} />
+        <Route path='templates/edit-template' element={<EditTemplate />} />
       </Route>
     </Routes>
   );

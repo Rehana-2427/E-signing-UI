@@ -1,3 +1,4 @@
+import Cookies from 'js-cookie';
 import { Button } from "react-bootstrap";
 import { FaBars, FaUser } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
@@ -17,9 +18,21 @@ const Dashboardnavbar = ({ toggleSidebar }) => {
         }
     };
     const handleLogout = () => {
+        const isLocalhost = window.location.hostname === 'localhost';
+        const domain = isLocalhost ? undefined : '.signbook.co';
+
+        document.cookie.split(';').forEach(cookie => {
+            const cookieName = cookie.split('=')[0].trim();
+
+            Cookies.remove(cookieName, { domain, path: '/' });
+            Cookies.remove(cookieName, { path: '/' });
+        });
+
         localStorage.clear();
-        navigate('/');
+        window.location.href = '/';
     };
+
+
 
     const goToHome = () => {
         const isLocalhost = window.location.hostname === "localhost";

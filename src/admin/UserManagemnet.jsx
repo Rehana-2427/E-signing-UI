@@ -42,8 +42,8 @@ const UserManagemnet = () => {
   };
 
   return (
-    <div>
-      <h2>User Credit Management</h2>
+    <>
+      <h1><strong>User Credit Management</strong></h1>
       <Table striped bordered hover>
         <thead>
           <tr>
@@ -102,7 +102,7 @@ const UserManagemnet = () => {
         </Toast>
       </ToastContainer>
 
-    </div>
+    </>
   );
 };
 

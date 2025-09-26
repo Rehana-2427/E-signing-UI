@@ -1,11 +1,10 @@
 import Cookies from 'js-cookie';
 import { Button } from "react-bootstrap";
 import { FaBars, FaUser } from "react-icons/fa";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import './DashboardLayout.css'; // Custom styles
 
 const Dashboardnavbar = ({ toggleSidebar }) => {
-    const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem('user'));
     const userName = user?.userName;
     const toggleFullScreen = () => {

@@ -145,7 +145,7 @@ const PendingDocs = () => {
             </div>
             <Table hover>
                 <thead>
-                    <tr style={{ background: "#f0f0f0" }}>
+                    <tr>
                         <th>Document Name</th>
                         <th >Date Created</th>
                         <th >Signed On</th>

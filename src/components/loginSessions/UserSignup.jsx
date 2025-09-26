@@ -151,38 +151,14 @@ const UserSignup = () => {
         }
     }, [passwordCriteriaError]);
 
-
-    // const handleGoogleLogin = async (credentialResponse) => {
-    //     const idToken = credentialResponse.credential;
-
-    //     try {
-    //         const response = await  authapi.googleLogin(idToken);
-    //         Swal.fire({
-    //             title: 'Registration Successful!',
-    //             text: 'You have signed in with Google successfully.',
-    //             icon: 'success',
-    //             confirmButtonText: 'Continue to Dashboard'
-    //         }).then(() => {
-    //             window.location.href = "/dashboard";
-    //         });
-    //     } catch (error) {
-    //         toast.error("Google sign-in failed");
-    //         console.error(error);
-    //     }
-    // };
     const handleGoogleLogin = async (credentialResponse) => {
         const idToken = credentialResponse.credential;
 
         try {
             const response = await authapi.googleLogin(idToken);
             const jwtToken = response.data.token;
-
-            // ✅ Store JWT
             localStorage.setItem("token", jwtToken);
-
-            // ✅ Directly go to dashboard (no registration page)
             window.location.href = "/dashboard";
-
         } catch (error) {
             toast.error("Google sign-in failed");
             console.error(error);
@@ -205,7 +181,6 @@ const UserSignup = () => {
                                         isLogin
                                         routeUrl="/signin"
                                         googleHandler={handleGoogleLogin}
-                                    // facebookHandler={() => alert("Facebook login")}
                                     />
                                     <p>
                                         If already have account?{" "}

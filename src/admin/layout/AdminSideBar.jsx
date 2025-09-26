@@ -1,7 +1,6 @@
 import { useRef } from "react";
 import { Nav } from "react-bootstrap";
 import {
-    FaAddressBook,
     FaFileAlt,
     FaFolderOpen,
     FaPlusCircle,
@@ -19,7 +18,7 @@ const AdminSideBar = () => {
         { to: "/admin-dashboard/credit", label: "Credits", icon: <FaFileAlt size={30} /> },
         { to: "/admin-dashboard/user-management", label: "User Management", icon: <FaPlusCircle size={30} /> },
         { to: "/admin-dashboard/settings", label: "Settings", icon: <FaFolderOpen size={30} /> },
-        { to: "/admin-dashboard/logout", label: "Logout", icon: <FaAddressBook size={30} /> }
+        // { to: "/admin-dashboard/logout", label: "Logout", icon: <FaAddressBook size={30} /> }
     ];
 
     const isLinkActive = (link) => location.pathname === link.to;

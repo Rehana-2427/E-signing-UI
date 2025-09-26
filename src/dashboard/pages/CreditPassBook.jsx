@@ -29,7 +29,7 @@ const CreditPassBook = () => {
     }
   }
   return (
-    <div className="container mt-4">
+    <>
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h1><strong>Credit PassBook</strong></h1>
         <Button onClick={() => navigate('/dashboard/creditPassBook/transaction-history')}>
@@ -92,7 +92,7 @@ const CreditPassBook = () => {
           </Toast.Body>
         </Toast>
       </ToastContainer>
-    </div>
+    </>
   );
 };
 

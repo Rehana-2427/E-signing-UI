@@ -39,7 +39,7 @@ const Credits = () => {
     });
   };
   return (
-    <div style={{ padding: 20 }}>
+    <>
       <ToastContainer position="top-end" className="p-3">
         <Toast
           onClose={() => setShowToast(false)}
@@ -54,7 +54,7 @@ const Credits = () => {
           <Toast.Body>Settings updated!</Toast.Body>
         </Toast>
       </ToastContainer>
-      <h2>Credit Settings</h2>
+      <h1><strong>Credit Settings</strong></h1>
       <div style={{ marginBottom: 10 }}>
         <label>Document Credit: </label>
         <input
@@ -97,7 +97,7 @@ const Credits = () => {
           </tbody>
         </Table>
       </div>
-    </div>
+    </>
 
   );
 };

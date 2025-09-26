@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import { Button, Table } from "react-bootstrap";
-import { BiMessageRoundedDetail } from "react-icons/bi";
+import { BsChatRightDotsFill } from "react-icons/bs";
+import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 import signerApi from "../../api/signerapi";
 
 const Contacts = () => {
     const [contacts, setContacts] = useState([]);
     const user = JSON.parse(localStorage.getItem("user"));
     const userEmail = user?.userEmail;
+    const navigate = useNavigate();
     useEffect(() => {
         if (userEmail) {
             signerApi.getSignersContact(userEmail)
@@ -18,6 +21,19 @@ const Contacts = () => {
                 });
         }
     }, [userEmail]);
+
+    const handleComingSoon = () => {
+        Swal.fire({
+            icon: 'info',
+            title: 'Coming Soon!',
+            text: 'This feature is under development.',
+            confirmButtonText: 'OK'
+        });
+    };
+
+    const handleContactClick = (signer) => {
+        navigate("/dashboard/contacts/chat", { state: { selectedContact: signer } });
+    };
     return (
         <>
             <h1><strong>List of all signatories</strong></h1>
@@ -41,8 +57,13 @@ const Contacts = () => {
                                 <td>{signer.name}</td>
                                 <td>{signer.email}</td>
                                 <td>{signer.signedCount || 0}</td>
+                                {/* <td>
+                                    <Button variant="success" onClick={handleComingSoon}> <BiMessageRoundedDetail /></Button>
+                                </td> */}
                                 <td>
-                                    <Button variant="success"> <BiMessageRoundedDetail /></Button>
+                                    <Button variant="success" onClick={() => handleContactClick(signer)}>
+                                        <BsChatRightDotsFill  />
+                                    </Button>
                                 </td>
                             </tr>
                         ))

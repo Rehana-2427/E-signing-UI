@@ -11,6 +11,7 @@ import Contacts from "./pages/Contacts";
 import Dashboard from "./pages/dashboard_stats/Dashboard";
 
 import AuditTrail from "./pages/AuditTrail";
+import Chat from "./pages/Chat";
 import CreditPassBook from "./pages/CreditPassBook";
 import CreditTransactionSummary from "./pages/CreditTransactionSummary";
 import NewConsent from "./pages/NewConsent";
@@ -34,7 +35,7 @@ const DashboardRoute = () => {
         <Route path="/sender-docs" element={<SenderDocs />} />
         <Route path="/pdf-viewer" element={<SignatureDocuments />} />
         <Route path="/my-consents" element={<Consents />} />
-        <Route path="/new-consent" element={<NewConsent />} />
+        <Route path="/new-consent/step/:step" element={<NewConsent />} />
         <Route path="/my-consents/audit-trail" element={<AuditTrail />} />
         <Route path="/my-docs" element={<MyDocs />} />
         <Route path="/my-docs/view" element={<RecipentViewDoc />} />
@@ -44,6 +45,7 @@ const DashboardRoute = () => {
         <Route path="/profile" element={<Profile />} />
         <Route path='/templates' element={<Templates />} />
         <Route path='templates/edit-template' element={<EditTemplate />} />
+        <Route path='/contacts/chat' element={<Chat />} />
       </Route>
     </Routes>
   );

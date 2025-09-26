@@ -181,7 +181,7 @@ const DocumentDetails = ({ onNext, formData, setFormData, userCredit }) => {
 
             const mergedFile = await mergeFiles(values.file, additionalFiles);
 
-            const finalValues = { ...values, file: mergedFile }; // ✅ Replace with merged file
+            const finalValues = { ...values, file: mergedFile }; 
             setFormData(prev => ({ ...prev, ...finalValues }));
             onNext();
           }}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import adminUserCreditApi from "../../api/adminUserCreditApi";
 import DocumentDetails from "./new_consent/DocumentDetails";
 import PaymentSend from "./new_consent/PaymentSend";
@@ -7,8 +7,12 @@ import SignatoriesSettings from "./new_consent/SignatoriesSettings";
 
 const NewConsent = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({});
+  const { step } = useParams();  // ← Get current step from the URL
+  const location = useLocation();
+
+  const currentStep = parseInt(step || 1);  // fallback to 1
+
+  const [formData, setFormData] = useState(location.state?.formData || {});
   const [signatureFields, setSignatureFields] = useState(formData.signatureFields || []);
   const [userCredit, setUserCredit] = useState(null);
 
@@ -19,24 +23,26 @@ const NewConsent = () => {
     if (userEmail) {
       adminUserCreditApi
         .getUserCreditsByEmail(userEmail)
-        .then((res) => {
-          setUserCredit(res.data);
-        })
-        .catch((err) => {
-          console.error("Error fetching credit info", err);
-        });
+        .then((res) => setUserCredit(res.data))
+        .catch((err) => console.error("Error fetching credit info", err));
     }
   }, [userEmail]);
 
-  const handleNext = () => setStep((prev) => prev + 1);
-  const handlePrevious = () => setStep((prev) => prev - 1);
+  const goToStep = (nextStep) => {
+    navigate(`/dashboard/new-consent/step/${nextStep}`, {
+      state: { formData }
+    });
+  };
+
+  const handleNext = () => goToStep(currentStep + 1);
+  const handlePrevious = () => goToStep(currentStep - 1);
 
   return (
     <>
       <h1><strong>New Consent</strong></h1>
-      <p>Step {step} of 3</p>
+      <p>Step {currentStep} of 3</p>
 
-      {step === 1 && (
+      {currentStep === 1 && (
         <DocumentDetails
           onNext={handleNext}
           formData={formData}
@@ -45,7 +51,7 @@ const NewConsent = () => {
         />
       )}
 
-      {step === 2 && (
+      {currentStep === 2 && (
         <SignatoriesSettings
           onNext={handleNext}
           onPrevious={handlePrevious}
@@ -56,7 +62,7 @@ const NewConsent = () => {
         />
       )}
 
-      {step === 3 && (
+      {currentStep === 3 && (
         <PaymentSend
           onPrevious={handlePrevious}
           formData={formData}

@@ -7,15 +7,18 @@ import SenderDocs from "./SenderDocs";
 import SignatureDocuments from "./SignatureDocuments";
 import SignedDocument from "./SignedDocument";
 import DashboardLayout from "./layout/DashboardLayout";
-import Contacts from "./pages/Contacts";
-import Dashboard from "./pages/dashboard_stats/Dashboard";
-
 import AuditTrail from "./pages/AuditTrail";
 import Chat from "./pages/Chat";
-import CreditPassBook from "./pages/CreditPassBook";
-import CreditTransactionSummary from "./pages/CreditTransactionSummary";
+import MyCompanies from "./pages/Comapnies/MyCompanies";
+import Contacts from "./pages/Contacts";
+import Invitations from "./pages/Invitation/Invitations";
 import NewConsent from "./pages/NewConsent";
 import Profile from "./pages/Profile";
+import CompanyCreditReport from "./pages/credits/CompanyCreditReport";
+import CompanyCreditTransactionHistory from "./pages/credits/CompanyCreditTransactionHistory";
+import CreditRequest from "./pages/credits/CreditRequest";
+import UserCreditTransactionReport from "./pages/credits/UserCreditTransactionReport";
+import Dashboard from "./pages/dashboard_stats/Dashboard";
 import Consents from "./pages/myconsents/Consents";
 import MyDocs from "./pages/mydocs/MyDocs";
 import RecipentViewDoc from "./pages/recipent_document/RecipentViewDoc";
@@ -40,12 +43,30 @@ const DashboardRoute = () => {
         <Route path="/my-docs" element={<MyDocs />} />
         <Route path="/my-docs/view" element={<RecipentViewDoc />} />
         <Route path="/contacts" element={<Contacts />} />
-        <Route path="/creditPassBook" element={<CreditPassBook />} />
-        <Route path="/creditPassBook/transaction-history" element={<CreditTransactionSummary />} />
+        {/* <Route path="/creditPassBook" element={<CreditPassBook />} />
+        <Route path="/creditPassBook/transaction-history" element={<CreditTransactionSummary />} /> */}
         <Route path="/profile" element={<Profile />} />
-        <Route path='/templates' element={<Templates />} />
-        <Route path='templates/edit-template' element={<EditTemplate />} />
-        <Route path='/contacts/chat' element={<Chat />} />
+        <Route path="/templates" element={<Templates />} />
+        <Route path="templates/edit-template" element={<EditTemplate />} />
+        <Route path="/contacts/chat" element={<Chat />} />
+        <Route path="/creditRequest" element={<CreditRequest />} />
+        <Route
+          path="/creditRequest/user/user-transaction-history"
+          element={<UserCreditTransactionReport />}
+        />
+        <Route
+          path="/creditRequest/my-companies/:companyName/company-transaction-history"
+          element={<CompanyCreditTransactionHistory />}
+        />
+        <Route
+          path="/creditRequest/my-companies"
+          element={<MyCompanies />}
+        />
+         <Route
+          path="/creditRequest/my-companies/:companyKey"
+          element={<CompanyCreditReport />}
+        />
+        <Route path="/invitations" element={<Invitations />} />
       </Route>
     </Routes>
   );

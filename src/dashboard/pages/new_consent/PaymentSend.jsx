@@ -4,15 +4,11 @@ import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import adminApi from "../../../api/adminApi";
 import adminUserCreditApi from "../../../api/adminUserCreditApi";
+import companyApi from "../../../api/company";
+import companyUserApi from "../../../api/companyUsers";
 import documentApi from "../../../api/documentapi";
 
-const PaymentSend = ({
-  onPrevious,
-  formData,
-  setFormData,
-  setSignatureFields,
-  signatureFields,
-}) => {
+const PaymentSend = ({ onPrevious, formData }) => {
   const navigate = useNavigate();
 
   const user = JSON.parse(localStorage.getItem("user"));
@@ -26,7 +22,33 @@ const PaymentSend = ({
   const [confirmSend, setConfirmSend] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [userCredits, setUserCredits] = useState([]);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [userCompanies, setUserCompanies] = useState([]);
+  const [assignedCompanies, setAssignedCompanies] = useState([]);
+  const [creditSource, setCreditSource] = useState("user"); // "user" or "company"
+  const [selectedCompany, setSelectedCompany] = useState("");
 
+  useEffect(() => {
+    const fetchUserCompanies = async () => {
+      try {
+        const user = JSON.parse(localStorage.getItem("user"));
+        if (!user) return;
+
+        // Assuming this endpoint exists and returns a list of companies created by the user
+        const response = await companyApi.getCompaniesByEmail(user.userEmail);
+        setUserCompanies(response.data || []);
+
+        const assignedResponse = await companyUserApi.getAssignedCompanies(
+          user.userEmail
+        );
+        setAssignedCompanies(assignedResponse.data || []);
+      } catch (error) {
+        console.error("Error fetching user companies:", error);
+      }
+    };
+
+    fetchUserCompanies();
+  }, []);
   useEffect(() => {
     fetchUserCredits();
   }, []);
@@ -94,6 +116,19 @@ const PaymentSend = ({
   const predictedUsed = originalUsed + creditDeduction;
 
   const handleConfirmSend = async () => {
+    setErrorMsg("");
+
+    // Basic validation: check if required document details are present
+    if (
+      !formData.documentId ||
+      !formData.documentName ||
+      !formData.signatories ||
+      formData.signatories.length === 0 ||
+      (!formData.file && !formData.editedPdfBlob)
+    ) {
+      setErrorMsg("Please fill document details first and then send.");
+      return;
+    }
     setIsLoading(true);
 
     const formDataToSend = new FormData();
@@ -187,12 +222,56 @@ const PaymentSend = ({
     }
   };
 
+  const mergedCompanies = [
+    ...userCompanies.map((c) => ({ ...c, type: "owned" })),
+    ...assignedCompanies.map((c) => ({ ...c, type: "assigned" })),
+  ];
+
   return (
     <Card className="p-4">
       <h4>
         <strong>Payments & Confirmations</strong>
       </h4>
       <p>Confirm the charges before sending the document for signing.</p>
+
+      {(userCompanies.length > 0 || assignedCompanies.length > 0) && (
+        <div className="mb-3">
+          <h5>Choose Credit Source</h5>
+          <Form.Check
+            type="radio"
+            label="Use My Credits"
+            name="creditSource"
+            value="user"
+            checked={creditSource === "user"}
+            onChange={(e) => setCreditSource(e.target.value)}
+          />
+          <Form.Check
+            type="radio"
+            label="Use Company Credits"
+            name="creditSource"
+            value="company"
+            checked={creditSource === "company"}
+            onChange={(e) => setCreditSource(e.target.value)}
+          />
+
+          {creditSource === "company" && (
+            <Form.Group controlId="selectCompany" className="mt-2">
+              <Form.Label>Select Company</Form.Label>
+              <Form.Select
+                value={selectedCompany}
+                onChange={(e) => setSelectedCompany(e.target.value)}
+              >
+                <option value="">-- Select Company --</option>
+                {mergedCompanies.map((company) => (
+                  <option key={company.id} value={company.companyName}>
+                    {company.companyName}
+                  </option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+          )}
+        </div>
+      )}
 
       <div className="mb-4">
         <h4>Charges Summary</h4>
@@ -223,6 +302,7 @@ const PaymentSend = ({
         </p>
       </div>
 
+
       <Form.Check
         type="checkbox"
         label="Confirm and send to the signatories"
@@ -248,6 +328,11 @@ const PaymentSend = ({
             "Confirm and Send"
           )}
         </Button>
+        {errorMsg && (
+          <div className="text-danger mt-2" role="alert" aria-live="assertive">
+            {errorMsg}
+          </div>
+        )}
       </div>
     </Card>
   );

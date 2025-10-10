@@ -173,7 +173,7 @@ const DocumentDetails = ({ onNext, formData, setFormData, userCredit }) => {
                 cancelButtonText: 'Cancel'
               }).then((result) => {
                 if (result.isConfirmed) {
-                  navigate("/dashboard/creditPassBook");
+                  navigate("/dashboard/creditRequest?tab=user");
                 }
               });
               return;

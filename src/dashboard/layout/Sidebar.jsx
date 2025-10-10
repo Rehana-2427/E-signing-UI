@@ -1,17 +1,19 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Nav } from "react-bootstrap";
 import {
-    FaAddressBook,
-    FaBook,
-    FaFileAlt,
-    FaFilePdf,
-    FaFolderOpen,
-    FaPlusCircle,
-    FaTachometerAlt,
-    FaUser,
+  FaAddressBook,
+  FaBook,
+  FaFileAlt,
+  FaFilePdf,
+  FaFolderOpen,
+  FaPlusCircle,
+  FaTachometerAlt,
+  FaUser,
 } from "react-icons/fa";
+import { MdInsertInvitation } from "react-icons/md";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import "./Sidebar.css"; // Optional for styling
+import "./Sidebar.css";
+
 
 const Sidebar = () => {
   const navigate = useNavigate();
@@ -87,9 +89,14 @@ const Sidebar = () => {
       icon: <FaAddressBook size={30} />,
     },
     {
-      to: "/dashboard/creditPassBook",
+      to: "/dashboard/creditRequest?tab=user",
       label: "Credit PassBook",
       icon: <FaBook size={30} />,
+    },
+      {
+      to: "/dashboard/invitations",
+      label: "Invitations",
+      icon: <MdInsertInvitation   size={30} />,
     },
     { to: "/dashboard/profile", label: "Profile", icon: <FaUser size={30} /> },
   ];
@@ -106,6 +113,15 @@ const Sidebar = () => {
 
   const isLinkActive = (link) => {
     const currentPath = location.pathname;
+    const linkPathname = link.to.split("?")[0];
+
+    if (linkPathname === "/dashboard/creditRequest") {
+      // Mark active if currentPath is exactly or starts with this path (including nested routes)
+      return (
+        currentPath === "/dashboard/creditRequest" ||
+        currentPath.startsWith("/dashboard/creditRequest/")
+      );
+    }
 
     const specialCases = {
       "/dashboard/my-docs": "/dashboard/my-docs/view",
@@ -113,6 +129,9 @@ const Sidebar = () => {
         "/dashboard/creditPassBook/transaction-history",
       "/dashboard/my-consents": "/dashboard/my-consents/audit-trail",
       "/dashboard/templates": "/dashboard/templates/edit-template",
+      "/dashboard/contacts": "/dashboard/contacts/chat",
+      // "/dashboard/creditRequest": "/dashboard/creditRequest/user/user-transaction-history",
+      // "/dashboard/creditRequest": "/dashboard/creditRequest/organization/organization-transaction-history",
     };
     for (const [key, basePath] of Object.entries(specialCases)) {
       if (link.to === key && currentPath.startsWith(basePath)) {

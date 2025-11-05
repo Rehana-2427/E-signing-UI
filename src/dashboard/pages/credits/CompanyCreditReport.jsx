@@ -1,72 +1,85 @@
 import { useEffect, useState } from "react";
-import { Button, Card, Spinner, Table } from "react-bootstrap";
+import { Alert, Button, Spinner, Table } from "react-bootstrap";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import companyApi from "../../../api/company";
+import adminCompanyCreditApi from "../../../api/adminCompanyCredit";
 
 const CompanyCreditReport = () => {
-  const { companyKey } = useParams();  // e.g. "Shiksha Infotech-RK"
+  const { companyKey } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
 
+  const companyName =
+    location.state?.companyName || decodeURIComponent(companyKey);
   const [reportData, setReportData] = useState(null);
+
+  const user = JSON.parse(localStorage.getItem("user"));
+  const userEmail = user?.userEmail;
+
+  const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchReport = async () => {
+    const fetchTransactions = async () => {
       try {
-        // Optionally, you might have passed company ID in `location.state`
-        const state = location.state || {};
-        const companyId = state.companyId;
-
-        // If you have an API to get the usage report by company ID
-        const resp = await companyApi.getCreditUsageReport(companyId);
-        setReportData(resp.data);
-      } catch (error) {
-        console.error("Error fetching credit report:", error);
+        const res = await adminCompanyCreditApi.getCredtTransactionsByCompany(
+          companyName
+        );
+        setTransactions(res.data);
+      } catch (err) {
+        setError("Failed to load credit transactions.");
+        console.error(err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchReport();
-  }, [companyKey, location]);
+    if (companyName) {
+      fetchTransactions();
+    }
+  }, [companyName]);
 
   return (
     <>
-      <h1><strong>Credit Usage Report: {companyKey}</strong></h1>
-      {loading ? (
-        <Spinner animation="border" />
-      ) : !reportData ? (
-        <p>No report available.</p>
-      ) : (
-        <Card className="mt-3 p-3">
-          <Table striped bordered hover responsive>
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <h1>
+            <strong>Credit Transaction Report</strong>
+          </h1>
+          <Button onClick={() => navigate(-1)}>Back</Button>
+        </div>
+        {loading && <Spinner animation="border" />}
+        {error && <Alert variant="danger">{error}</Alert>}
+
+        {!loading && transactions.length === 0 && (
+          <p style={{ color: "red" }}>No credit transactions found.</p>
+        )}
+
+        {!loading && transactions.length > 0 && (
+          <Table striped bordered hover responsive className="mt-4">
             <thead>
               <tr>
-                <th>#</th>
-                <th>User Email / Name</th>
-                <th>Credits Used</th>
-                <th>When</th>
-                <th>Balance After Use</th>
+                <th>UserEmail</th>
+                <th>Date</th>
+                <th>Document Name</th>
+                <th>Used Credits</th>
+                <th>Balance Credits</th>
+                <th>Credits Bought</th>
               </tr>
             </thead>
             <tbody>
-              {reportData.entries.map((entry, idx) => (
-                <tr key={entry.id || idx}>
-                  <td>{idx + 1}</td>
-                  <td>{entry.userEmail || entry.userName}</td>
-                  <td>{entry.creditsUsed}</td>
-                  <td>{entry.timestamp}</td>
-                  <td>{entry.balanceAfter}</td>
+              {transactions.map((txn) => (
+                <tr key={txn.id}>
+                  <td>{userEmail}</td>
+                  <td>{txn.date}</td>
+                  <td>{txn.documentName}</td>
+                  <td>{txn.usedCredits}</td>
+                  <td>{txn.balanceCredits}</td>
+                  <td>{txn.paidCredits}</td>
                 </tr>
               ))}
             </tbody>
           </Table>
-        </Card>
-      )}
-      <Button variant="secondary" onClick={() => navigate(-1)} className="mt-3">
-        Back
-      </Button>
+        )}
     </>
   );
 };

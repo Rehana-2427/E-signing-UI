@@ -1,148 +1,318 @@
 import { debounce } from "lodash";
 import { useEffect, useState } from "react";
-import { Button, Table } from "react-bootstrap";
-import { AiFillEye, AiOutlineDownload } from "react-icons/ai";
+import { Button, OverlayTrigger, Table, Tooltip } from "react-bootstrap";
+import {
+  AiOutlineClockCircle,
+  AiOutlineDownload,
+  AiOutlineSend,
+} from "react-icons/ai";
+import { FaRegPaperPlane } from "react-icons/fa";
+import { HiDocumentReport } from "react-icons/hi";
+import { IoChatbubbles } from "react-icons/io5";
 import { MdEmail } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 import documentApi from "../../../api/documentapi";
 import ReminderModal from "../ReminderModal";
 import SearchBar from "../SearchBar";
 
-
 const MyConsents = () => {
-    const navigate = useNavigate();
-    const [consents, setConsents] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [showModal, setShowModal] = useState(false);
-    const [selectedDoc, setSelectedDoc] = useState(null);
-    const [searchQuery, setSearchQuery] = useState("");
-    const [searchTerm, setSearchTerm] = useState(""); // track the last submitted search
-    const user = JSON.parse(localStorage.getItem('user'));
-    const senderEmail = user?.userEmail;
+  const navigate = useNavigate();
+  const [consents, setConsents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchTerm, setSearchTerm] = useState(""); // track the last submitted search
+  const user = JSON.parse(localStorage.getItem("user"));
+  const senderEmail = user?.userEmail;
 
-    useEffect(() => {
-        const fetchConsents = async (query) => {
-            setLoading(true);
-            try {
-                let response;
-                if (searchTerm.trim() !== "") {
-                    response = await documentApi.getSearchSentConsensts(senderEmail, searchTerm);
-                } else {
-                    response = await documentApi.getMyConsents(senderEmail);
-                }
-                setConsents(response.data || []);
-            } catch (error) {
-                console.error("Failed to fetch consents:", error);
-                setConsents([]);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        const debouncedFetch = debounce(fetchConsents, 300);
-
-        debouncedFetch(searchQuery);
-
-        return () => {
-            debouncedFetch.cancel();
-        };
-    }, [senderEmail, searchTerm]);
-
-
-    const handleEmailClick = (doc) => {
-        setSelectedDoc(doc);
-        setShowModal(true);
+  useEffect(() => {
+    const fetchConsents = async (query) => {
+      setLoading(true);
+      try {
+        let response;
+        if (searchTerm.trim() !== "") {
+          response = await documentApi.getSearchSentConsensts(
+            senderEmail,
+            searchTerm
+          );
+        } else {
+          response = await documentApi.getMyConsents(senderEmail);
+        }
+        setConsents(response.data || []);
+      } catch (error) {
+        console.error("Failed to fetch consents:", error);
+        setConsents([]);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    const handleCloseModal = () => {
-        setShowModal(false);
-        setSelectedDoc(null);
+    const debouncedFetch = debounce(fetchConsents, 300);
+
+    debouncedFetch(searchQuery);
+
+    return () => {
+      debouncedFetch.cancel();
     };
+  }, [senderEmail, searchTerm]);
 
-    const handleSendReminder = (docId) => {
-        console.log("Sending email reminder for document:", docId);
-        setShowModal(false);
-    };
-    const handleSearch = () => {
-        setSearchTerm(searchQuery.trim()); // set searchTerm to trigger search
-    };
+  const handleEmailClick = (doc) => {
+    setSelectedDoc(doc);
+    setShowModal(true);
+  };
 
-    return (
-        <>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
-                <div style={{ width: '250px' }}>
-                    <SearchBar
-                        placeholder="Search drafts..."
-                        searchQuery={searchQuery}
-                        setSearchQuery={setSearchQuery}
-                        onSearch={handleSearch}  // pass handler here
-                    />
-                </div>
-            </div>
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedDoc(null);
+  };
 
-            <Table hover>
-                <thead>
-                    <tr>
-                        <th>Document Name</th>
-                        <th>Sent On</th>
-                        <th># of People</th>
-                        <th>Actions</th>
-                        <th>Audit Trail</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {loading ? (
-                        <tr>
-                            <td colSpan="6">Loading consents...</td>
-                        </tr>
-                    ) : consents.length === 0 ? (
-                        <tr>
-                            <td colSpan="6">
-                                {searchQuery && searchQuery.trim() !== "" ? "No results found." : "No consents found."}
-                            </td>
-                        </tr>
-                    ) : (
-                        consents.map((consent) => (
-                            <tr key={consent.documentId}>
-                                <td>{consent.documentName}</td>
-                                <td>{consent.sentOn}</td>
-                                <td>{consent.signedCount} / {consent.totalSigners}</td>
-                                <td>
-                                    <Button variant="primary" size="sm" className="me-2" title="View">
-                                        <AiFillEye />
-                                    </Button>
-                                    <Button variant="success" size="sm" className="me-2" title="Download">
-                                        <AiOutlineDownload />
-                                    </Button>
-                                    <Button
-                                        variant="info"
-                                        size="sm"
-                                        title="Email"
-                                        onClick={() => handleEmailClick(consent)}
-                                    >
-                                        <MdEmail />
-                                    </Button>
-                                </td>
-                                <td>
-                                    <Button onClick={() => navigate(`/dashboard/my-consents/audit-trail?documentId=${consent.documentId}`)}>
-                                        Audit Trail
-                                    </Button>
-                                </td>
-                            </tr>
-                        ))
-                    )}
-                </tbody>
-            </Table>
+  const handleSendReminder = (docId) => {
+    console.log("Sending email reminder for document:", docId);
+    setShowModal(false);
+  };
+  const handleSearch = () => {
+    setSearchTerm(searchQuery.trim()); // set searchTerm to trigger search
+  };
+  const handleChat = (documentId, documentName) => {
+    if (!documentId) {
+      Swal.fire("Error", "Document ID is missing.", "error");
+      return;
+    }
 
-            <ReminderModal
-                show={showModal}
-                onClose={handleCloseModal}
-                documentId={selectedDoc?.documentId}
-                documentName={selectedDoc?.documentName}
-                onSend={handleSendReminder}
-            />
-        </>
-    );
+    navigate("/dashboard/chat-app", {
+      state: { documentId, documentName },
+    });
+  };
+
+  const handleSendToSigners = async (documentId) => {
+    try {
+      const response = await documentApi.sendToSigners(documentId);
+      Swal.fire("Success", response.data, "success");
+
+      // Update the document status in local state without refetching all
+      setConsents((prev) =>
+        prev.map((doc) =>
+          doc.documentId === documentId
+            ? { ...doc, documentStatus: "SENT_TO_SIGNERS" }
+            : doc
+        )
+      );
+    } catch (error) {
+      Swal.fire(
+        "Error",
+        error.response?.data || "Failed to send document to signers.",
+        "error"
+      );
+    }
+  };
+
+  return (
+    <>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          marginBottom: "1rem",
+        }}
+      >
+        <div style={{ width: "250px" }}>
+          <SearchBar
+            placeholder="Search drafts..."
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            onSearch={handleSearch} // pass handler here
+          />
+        </div>
+      </div>
+
+      <Table hover>
+        <thead>
+          <tr>
+            <th>#id</th>
+            <th>Document Name</th>
+            <th># of Reviewers count</th>
+            <th>Sent On</th>
+            <th># of signers count</th>
+            <th>Actions</th>
+            <th>Reviewer Status</th>
+            <th>Document Status</th>
+            <th>Chat</th>
+            <th>Audit Trail</th>
+          </tr>
+        </thead>
+        <tbody>
+          {loading ? (
+            <tr>
+              <td colSpan="6">Loading consents...</td>
+            </tr>
+          ) : consents.length === 0 ? (
+            <tr>
+              <td colSpan="6">
+                {searchQuery && searchQuery.trim() !== ""
+                  ? "No results found."
+                  : "No consents found."}
+              </td>
+            </tr>
+          ) : (
+            consents.map((consent) => (
+              <tr key={consent.documentId}>
+                <td>{consent.documentId}</td>
+                <td>{consent.documentName}</td>
+                <td>
+                  {consent.reviwercount} / {consent.totalReviwers}
+                </td>
+                <td>{consent.sentOn}</td>
+                <td>
+                  {consent.signedCount} / {consent.totalSigners}
+                </td>
+                <td>
+                  {/* <Button
+                    variant="primary"
+                    size="sm"
+                    className="me-2"
+                    title="View"
+                  >
+                    <AiFillEye />
+                  </Button> */}
+                  <Button
+                    variant="success"
+                    size="sm"
+                    className="me-2"
+                    title="Download"
+                  >
+                    <AiOutlineDownload />
+                  </Button>
+                  <Button
+                    variant="info"
+                    size="sm"
+                    title="Email"
+                    onClick={() => handleEmailClick(consent)}
+                  >
+                    <MdEmail />
+                  </Button>
+                </td>
+                <td>{consent.reviewerStatus}</td>
+
+                <td>
+                  {/* IN_REVIEW */}
+                  {consent.documentStatus === "IN_REVIEW" && (
+                    <OverlayTrigger
+                      placement="top"
+                      overlay={
+                        <Tooltip id={`tooltip-review-${consent.documentId}`}>
+                          In Review
+                        </Tooltip>
+                      }
+                    >
+                      <span
+                        style={{
+                          color: "orange",
+                          fontSize: "1.4rem",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <AiOutlineClockCircle />
+                      </span>
+                    </OverlayTrigger>
+                  )}
+
+                  {/* READY TO SEND (REVIEW_COMPLETED) */}
+                  {consent.documentStatus === "REVIEW_COMPLETED" && (
+                    <OverlayTrigger
+                      placement="top"
+                      overlay={
+                        <Tooltip id={`tooltip-send-${consent.documentId}`}>
+                          Ready to Send
+                        </Tooltip>
+                      }
+                    >
+                      <Button
+                        variant="outline-success"
+                        size="sm"
+                        onClick={() => handleSendToSigners(consent.documentId)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                      >
+                        <FaRegPaperPlane />
+                        {/* <span style={{ fontSize: "0.85rem" }}>Send</span> */}
+                      </Button>
+                    </OverlayTrigger>
+                  )}
+
+                  {/* ALREADY SENT (SENT_TO_SIGNERS or NO REVIEWERS) */}
+                  {consent.documentStatus === "SENT_TO_SIGNERS" && (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        color: "blue",
+                      }}
+                    >
+                      <OverlayTrigger
+                        placement="top"
+                        overlay={
+                          <Tooltip id={`tooltip-sent-${consent.documentId}`}>
+                            Already Sent to Signers
+                          </Tooltip>
+                        }
+                      >
+                        <span
+                          style={{
+                            fontSize: "1.4rem",
+                            cursor: "pointer",
+                          }}
+                        >
+                          <AiOutlineSend />
+                        </span>
+                      </OverlayTrigger>
+                      {/* <span style={{ fontSize: "0.9rem" }}>Already Sent</span> */}
+                    </div>
+                  )}
+                </td>
+
+                <td>
+                  <Button
+                    variant="secondary"
+                    onClick={() =>
+                      handleChat(consent.documentId, consent.documentName)
+                    }
+                    title="Chat"
+                  >
+                    <IoChatbubbles />
+                  </Button>
+                </td>
+                <td>
+                  <Button
+                    onClick={() =>
+                      navigate(
+                        `/dashboard/my-consents/audit-trail?documentId=${consent.documentId}`
+                      )
+                    }
+                  >
+                    <HiDocumentReport />
+                  </Button>
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </Table>
+
+      <ReminderModal
+        show={showModal}
+        onClose={handleCloseModal}
+        documentId={selectedDoc?.documentId}
+        documentName={selectedDoc?.documentName}
+        onSend={handleSendReminder}
+      />
+    </>
+  );
 };
 
 export default MyConsents;

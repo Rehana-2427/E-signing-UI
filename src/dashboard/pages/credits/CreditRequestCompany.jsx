@@ -12,7 +12,8 @@ const CreditRequestCompany = () => {
   const [showToast, setShowToast] = useState(false);
   const [showForm, setShowForm] = useState(false); // 🔄 New state for toggle
   const [userCompanies, setUserCompanies] = useState([]);
-  const[assignedCompanies,setAssignedCompanies]=useState([]);
+  const [assignedCompanies, setAssignedCompanies] = useState([]);
+  const [mobileNumber, setMobileNumber] = useState();
 
   useEffect(() => {
     const fetchUserCompanies = async () => {
@@ -22,10 +23,14 @@ const CreditRequestCompany = () => {
 
         // Assuming this endpoint exists and returns a list of companies created by the user
         const response = await companyApi.getCompaniesByEmail(user.userEmail);
-        setUserCompanies(response.data || []);
+        setUserCompanies(Array.isArray(response.data) ? response.data : []);
 
-        const assignedResponse=await companyUserApi.getAssignedCompanies(user.userEmail);
-        setAssignedCompanies(assignedResponse.data || []);
+        const assignedResponse = await companyUserApi.getAssignedCompanies(
+          user.userEmail
+        );
+        setAssignedCompanies(
+          Array.isArray(assignedResponse.data) ? assignedResponse.data : []
+        );
       } catch (error) {
         console.error("Error fetching user companies:", error);
       }
@@ -45,12 +50,19 @@ const CreditRequestCompany = () => {
       };
 
       const response = await companyApi.createCompany(companyData);
-      console.log("Company Added submitted:", response.data);
 
-      setShowToast(true);
-      setCompanyName("");
-      setDescription("");
-      setShowForm(false); // hide form after submit
+      // Log the response to debug what is returned from the server
+      console.log("Company Added Response:", response);
+
+      if (response && response.data) {
+        console.log("Company Added submitted:", response.data);
+        setShowToast(true);
+        setCompanyName("");
+        setDescription("");
+        setShowForm(false); // hide form after submit
+      } else {
+        console.error("Unexpected response:", response);
+      }
     } catch (error) {
       console.error("Error submitting company credit request:", error);
     }
@@ -104,7 +116,7 @@ const CreditRequestCompany = () => {
         <Button variant="primary" onClick={() => setShowForm(!showForm)}>
           {showForm ? "Cancel" : "➕ Add Company"}
         </Button>
-        {(userCompanies.length > 0 || assignedCompanies.length>0) && (
+        {(userCompanies.length > 0 || assignedCompanies.length > 0) && (
           <Button
             variant="secondary"
             onClick={() => navigate("/dashboard/creditRequest/my-companies")}
@@ -119,15 +131,28 @@ const CreditRequestCompany = () => {
           <h5>Add company details</h5>
           <Form>
             <Form.Group controlId="companyName">
-              <Form.Label>Company Name</Form.Label>
+              <Form.Label>Company Name<span style={{ color: "red" }}>*</span></Form.Label>
               <Form.Control
                 type="text"
                 placeholder="Enter company name"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
+                required
               />
             </Form.Group>
 
+            <Form.Group controlId="mobileNumber">
+              <Form.Label>
+                Mobile Number <span style={{ color: "red" }}>*</span>
+              </Form.Label>
+              <Form.Control
+                type="tel"
+                value={mobileNumber}
+                onChange={(e) => setMobileNumber(e.target.value)}
+                placeholder="Enter your mobile number"
+                required
+              />
+            </Form.Group>
             <Form.Group controlId="description" className="mt-3">
               <Form.Label>Company Description</Form.Label>
               <Form.Control
@@ -135,6 +160,7 @@ const CreditRequestCompany = () => {
                 placeholder="Enter short description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+                required
               />
             </Form.Group>
 
@@ -142,7 +168,7 @@ const CreditRequestCompany = () => {
               className="mt-3"
               variant="success"
               onClick={handleSubmitRequest}
-              disabled={!companyName || !description}
+              disabled={!companyName || !description || !mobileNumber}
             >
               Submit
             </Button>

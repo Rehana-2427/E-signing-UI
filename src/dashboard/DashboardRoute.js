@@ -9,11 +9,13 @@ import SignedDocument from "./SignedDocument";
 import DashboardLayout from "./layout/DashboardLayout";
 import AuditTrail from "./pages/AuditTrail";
 import Chat from "./pages/Chat";
+import MyCollabs from "./pages/Collabs/MyCollabs";
 import MyCompanies from "./pages/Comapnies/MyCompanies";
 import Contacts from "./pages/Contacts";
 import Invitations from "./pages/Invitation/Invitations";
 import NewConsent from "./pages/NewConsent";
 import Profile from "./pages/Profile";
+import ChatModal from "./pages/chatComponent/ChatModal";
 import CompanyCreditReport from "./pages/credits/CompanyCreditReport";
 import CompanyCreditTransactionHistory from "./pages/credits/CompanyCreditTransactionHistory";
 import CreditRequest from "./pages/credits/CreditRequest";
@@ -22,6 +24,8 @@ import Dashboard from "./pages/dashboard_stats/Dashboard";
 import Consents from "./pages/myconsents/Consents";
 import MyDocs from "./pages/mydocs/MyDocs";
 import RecipentViewDoc from "./pages/recipent_document/RecipentViewDoc";
+import FileReviewer from "./pages/reviewedDocuments/FileReviewer";
+import ReviewerConsesnts from "./pages/reviewedDocuments/ReviewerConsesnts";
 import EditTemplate from "./pages/templates/EditTemplate";
 import Templates from "./pages/templates/Templates";
 
@@ -58,16 +62,23 @@ const DashboardRoute = () => {
           path="/creditRequest/my-companies/:companyName/company-transaction-history"
           element={<CompanyCreditTransactionHistory />}
         />
+        <Route path="/creditRequest/my-companies" element={<MyCompanies />} />
         <Route
-          path="/creditRequest/my-companies"
-          element={<MyCompanies />}
-        />
-         <Route
           path="/creditRequest/my-companies/:companyKey"
           element={<CompanyCreditReport />}
         />
         <Route path="/invitations" element={<Invitations />} />
-      </Route>
+        <Route path="/review-documents" element={<ReviewerConsesnts />} />
+         <Route
+          path="/chat-app"
+          element={<ChatModal />}
+        />
+        <Route
+          path="/review-documents/review-file"
+          element={<FileReviewer />}
+        />
+        <Route path="/my-collabs" element={<MyCollabs />} />
+      </Route> 
     </Routes>
   );
 };

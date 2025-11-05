@@ -6,6 +6,7 @@ import {
   FaFileAlt,
   FaFilePdf,
   FaFolderOpen,
+  FaHandshake,
   FaPlusCircle,
   FaTachometerAlt,
   FaUser,
@@ -88,13 +89,24 @@ const Sidebar = () => {
       label: "Contacts",
       icon: <FaAddressBook size={30} />,
     },
+
+    {
+      to: "/dashboard/review-documents",
+      label: "Reviewed Documents",
+      icon: <FaFileAlt size={30} />,
+    },
     {
       to: "/dashboard/creditRequest?tab=user",
       label: "Credit PassBook",
       icon: <FaBook size={30} />,
     },
+     {
+      to: "/dashboard/my-collabs",
+      label: "My-Collabs",
+      icon: <FaHandshake  size={30} />,
+    },
       {
-      to: "/dashboard/invitations",
+      to: "/dashboard/invitations?tab=unReviewed",
       label: "Invitations",
       icon: <MdInsertInvitation   size={30} />,
     },
@@ -122,7 +134,20 @@ const Sidebar = () => {
         currentPath.startsWith("/dashboard/creditRequest/")
       );
     }
-
+   if (linkPathname === "/dashboard/review-documents") {
+      // Mark active if currentPath is exactly or starts with this path (including nested routes)
+      return (
+        currentPath === "/dashboard/review-documents" ||
+        currentPath.startsWith("/dashboard/review-documents/")
+      );
+    }
+    if (linkPathname === "/dashboard/invitations") {
+      // Mark active if currentPath is exactly or starts with this path (including nested routes)
+      return (
+        currentPath === "/dashboard/invitations" ||
+        currentPath.startsWith("/dashboard/invitations/")
+      );
+    }
     const specialCases = {
       "/dashboard/my-docs": "/dashboard/my-docs/view",
       "/dashboard/creditPassBook":

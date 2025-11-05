@@ -9,11 +9,14 @@ const MyDocs = () => {
         const storedTab = localStorage.getItem("docsActiveTab");
         if (storedTab) {
             setDocsActiveTab(storedTab);
-            localStorage.removeItem("docsActiveTab"); // Clear after use
+            localStorage.removeItem("docsActiveTab");
         }
     }, []);
     return (
-        <div>
+        <div  className="scrollable-container" 
+      style={{
+        height: "100%", 
+      }}>
             <h1><strong>My Docs</strong></h1>
             <Tabs
                 activeKey={docsActiveTab}

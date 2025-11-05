@@ -11,10 +11,11 @@ import {
   ToastContainer,
   Tooltip,
 } from "react-bootstrap";
-import { FaEye, FaUserMinus, FaUserPlus } from "react-icons/fa";
+import { FaUserPlus } from "react-icons/fa";
 import { TbBuildingMinus } from "react-icons/tb";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import adminCompanyCreditApi from "../../../api/adminCompanyCredit";
 import adminUserCreditApi from "../../../api/adminUserCreditApi";
 import companyApi from "../../../api/company";
 import companyUserApi from "../../../api/companyUsers";
@@ -26,6 +27,7 @@ const CreatedCompanies = () => {
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
   const [companyName, setCompanyName] = useState("");
+  const [mobileNumber, setMobileNumber] = useState("");
   const [modalType, setModalType] = useState(""); // "addCompany" or "addUser"
   const [selectedCompany, setSelectedCompany] = useState(null); // for addUser
   const [description, setDescription] = useState("");
@@ -35,15 +37,42 @@ const CreatedCompanies = () => {
   const [selectedRole, setSelectedRole] = useState("Sender");
   const [showCreditRequestModal, setShowCreditRequestModal] = useState(false);
   const [requestedCredits, setRequestedCredits] = useState("");
+  const [requestCPUnit, setRequestCPUnit] = useState("");
   const user = JSON.parse(localStorage.getItem("user"));
-
+  const [companyCredits, setCompanyCredits] = useState({});
   const fetchCompanies = async () => {
     try {
       const user = JSON.parse(localStorage.getItem("user"));
       if (!user?.userEmail) return;
 
       const response = await companyApi.getCompaniesByEmail(user.userEmail);
-      setCompanies(response.data || []);
+      const companiesData = response.data || [];
+      setCompanies(companiesData);
+
+      const creditPromises = companiesData.map(async (company) => {
+        try {
+          const res = await adminCompanyCreditApi.getCompanyCreditsByCompany(
+            company.companyName
+          );
+          return { name: company.companyName, credits: res.data };
+        } catch (error) {
+          console.error(
+            `Error fetching credits for ${company.companyName}:`,
+            error
+          );
+          return { name: company.companyName, credits: null };
+        }
+      });
+
+      const creditResults = await Promise.all(creditPromises);
+
+      // Map results into an object for quick lookup
+      const creditsMap = {};
+      creditResults.forEach((item) => {
+        creditsMap[item.name] = item.credits;
+      });
+
+      setCompanyCredits(creditsMap);
     } catch (error) {
       console.error("Error fetching companies:", error);
     } finally {
@@ -67,10 +96,10 @@ const CreatedCompanies = () => {
     text.length > length ? text.substring(0, length) + "..." : text;
 
   const handleSubmitRequest = async () => {
-    // const user = JSON.parse(localStorage.getItem("user"));
     const companyData = {
       companyName,
       description,
+      mobileNumber,
       adminUserName: user?.userName,
       adminEmail: user?.userEmail,
     };
@@ -80,7 +109,9 @@ const CreatedCompanies = () => {
       await fetchCompanies(); // ✅ fetch complete company data with id, credits, etc.
       setCompanyShowToast(true);
       setCompanyName("");
+      setMobileNumber("");
       setDescription("");
+      setRequestCPUnit("");
       handleClose();
     } catch (error) {
       console.error("Error creating company:", error);
@@ -95,6 +126,7 @@ const CreatedCompanies = () => {
   const handleShowAddUserModal = (company) => {
     setSelectedCompany(company);
     setModalType("addUser");
+
     setShowModal(true);
   };
   const handleClose = () => {
@@ -102,16 +134,19 @@ const CreatedCompanies = () => {
     setModalType("");
     setSelectedCompany(null);
     setCompanyName("");
+    setMobileNumber("");
     setDescription("");
     setInviteEmail("");
-    setSelectedRole("Sender");
+    setRequestCPUnit(requestCPUnit)
+    setSelectedRole(selectedRole);
   };
 
   const handleSendInvite = async () => {
     const inviteUserData = {
       companyId: selectedCompany.id,
-      userEmail: inviteEmail, // ✅ change from `email` to `userEmail`
-      invitedByEmail: user?.userEmail, // ✅ add this field — was missing
+      userEmail: inviteEmail,
+      invitedByEmail: user?.userEmail,
+      mobileNumber: mobileNumber,
       role: selectedRole,
     };
     try {
@@ -136,6 +171,8 @@ const CreatedCompanies = () => {
         userName: user?.userName,
         companyName: selectedCompany?.companyName,
         requestedCredits: parseInt(requestedCredits, 10),
+        requestCPUnit: parseInt(requestCPUnit, 5),
+        mobileNumber: requestData.mobileNumber,
         ...requestData,
       };
       const response = await adminUserCreditApi.requestUserCredits(
@@ -151,6 +188,9 @@ const CreatedCompanies = () => {
       console.log("Credit request submitted:", requestData);
 
       setRequestedCredits("");
+      setRequestCPUnit("");
+      setMobileNumber("");
+
       console.log("Credit request submitted:", response.data);
     } catch (error) {
       console.error("Error submitting credit request:", error);
@@ -183,130 +223,108 @@ const CreatedCompanies = () => {
                 <th>#</th>
                 <th>Company Name</th>
                 <th>Description</th>
-                <th>Credit Request</th>
+                <th>Balance Credits</th>
                 <th>Used Credits</th>
+                <th>CPU</th>
+                <th>Credit Request</th>
+                <th>Credit Details</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {companies.map((company, index) => (
-                <tr key={company.id}>
-                  <td>{index + 1}</td>
-                  <td>
-                    {company.companyName} - {getInitials(company.adminUserName)}
-                  </td>
-                  <td>
-                    <OverlayTrigger
-                      placement="top"
-                      overlay={
-                        <Tooltip id={`tooltip-desc-${company.id}`}>
-                          {company.description}
-                        </Tooltip>
-                      }
-                    >
-                      <span style={{ cursor: "pointer" }}>
-                        {truncate(company.description)}
-                      </span>
-                    </OverlayTrigger>
-                  </td>
-                  <td>
-                    <Button onClick={() => handleRequestForCredits(company)}>
-                      Request for Credits
-                    </Button>
-                  </td>
-                  <td>
-                    <Button
-                      variant="link"
-                      size="sm"
-                      onClick={() => {
-                        const encodedName = encodeURIComponent(
-                          company.companyName
-                        );
-                        navigate(
-                          `/dashboard/creditRequest/my-companies/${encodedName}/company-transaction-history`
-                        );
-                      }}
-                    >
-                      Company Credits
-                    </Button>
-                  </td>
-                  <td>
-                    <OverlayTrigger
-                      placement="top"
-                      overlay={
-                        <Tooltip id={`tooltip-view-${company.id}`}>
-                          View
-                        </Tooltip>
-                      }
-                    >
-                      <Button
-                        size="sm"
-                        variant="info"
-                        className="me-1 mb-1"
-                        onClick={() => console.log("View", company.id)}
-                      >
-                        <FaEye />
-                      </Button>
-                    </OverlayTrigger>
-
-                    <OverlayTrigger
-                      placement="top"
-                      overlay={
-                        <Tooltip id={`tooltip-add-${company.id}`}>
-                          Add Users
-                        </Tooltip>
-                      }
-                    >
-                      <Button
-                        size="sm"
-                        variant="success"
-                        className="me-1 mb-1"
-                        onClick={() => handleShowAddUserModal(company)}
-                      >
-                        <FaUserPlus />
-                      </Button>
-                    </OverlayTrigger>
-
-                    <OverlayTrigger
-                      placement="top"
-                      overlay={
-                        <Tooltip id={`tooltip-delete-${company.id}`}>
-                          Delete Users
-                        </Tooltip>
-                      }
-                    >
-                      <Button
-                        size="sm"
-                        variant="warning"
-                        className="me-1 mb-1"
-                        onClick={() => console.log("Delete Users", company.id)}
-                      >
-                        <FaUserMinus />
-                      </Button>
-                    </OverlayTrigger>
-
-                    <OverlayTrigger
-                      placement="top"
-                      overlay={
-                        <Tooltip id={`tooltip-delete-company-${company.id}`}>
-                          Delete Company
-                        </Tooltip>
-                      }
-                    >
-                      <Button
-                        size="sm"
-                        variant="danger"
-                        className="me-1 mb-1"
-                        onClick={() =>
-                          console.log("Delete Company", company.id)
+              {companies.map((company, index) => {
+                const credits = companyCredits[company.companyName]; // ✅ get correct credits
+                return (
+                  <tr key={company.id}>
+                    <td>{index + 1}</td>
+                    <td>
+                      {company.companyName} -{" "}
+                      {getInitials(company.adminUserName)}
+                    </td>
+                    <td>
+                      <OverlayTrigger
+                        placement="top"
+                        overlay={
+                          <Tooltip id={`tooltip-desc-${company.id}`}>
+                            {company.description}
+                          </Tooltip>
                         }
                       >
-                        <TbBuildingMinus />
+                        <span style={{ cursor: "pointer" }}>
+                          {truncate(company.description)}
+                        </span>
+                      </OverlayTrigger>
+                    </td>
+
+                    <td>{credits ? credits.balanceCredit : "Loading..."}</td>
+                    <td>{credits ? credits.usedCredit : "Loading..."}</td>
+                    <td>{credits ? credits.creditPriceUnit : "Loading..."}</td>
+
+                    <td>
+                      <Button onClick={() => handleRequestForCredits(company)}>
+                        Request for Credits
                       </Button>
-                    </OverlayTrigger>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+
+                    <td>
+                      <Button
+                        variant="link"
+                        size="sm"
+                        onClick={() => {
+                          const encodedName = encodeURIComponent(
+                            company.companyName
+                          );
+                          navigate(
+                            `/dashboard/creditRequest/my-companies/${encodedName}/company-transaction-history`
+                          );
+                        }}
+                      >
+                        Company Credits
+                      </Button>
+                    </td>
+
+                    <td>
+                      <OverlayTrigger
+                        placement="top"
+                        overlay={
+                          <Tooltip id={`tooltip-add-${company.id}`}>
+                            Add Users
+                          </Tooltip>
+                        }
+                      >
+                        <Button
+                          size="sm"
+                          variant="success"
+                          className="me-1 mb-1"
+                          onClick={() => handleShowAddUserModal(company)}
+                        >
+                          <FaUserPlus />
+                        </Button>
+                      </OverlayTrigger>
+
+                      <OverlayTrigger
+                        placement="top"
+                        overlay={
+                          <Tooltip id={`tooltip-delete-company-${company.id}`}>
+                            Delete Company
+                          </Tooltip>
+                        }
+                      >
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          className="me-1 mb-1"
+                          onClick={() =>
+                            console.log("Delete Company", company.id)
+                          }
+                        >
+                          <TbBuildingMinus />
+                        </Button>
+                      </OverlayTrigger>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </Table>
         </>
@@ -318,7 +336,7 @@ const CreatedCompanies = () => {
         <Modal.Header closeButton>
           <Modal.Title>
             {modalType === "addCompany"
-              ? "Add Company"
+              ? "Add Company details"
               : `Add User to ${selectedCompany?.companyName}`}
           </Modal.Title>
         </Modal.Header>
@@ -326,15 +344,30 @@ const CreatedCompanies = () => {
         <Modal.Body>
           {modalType === "addCompany" ? (
             <Card className="p-3">
-              <h5>Add company details</h5>
+              {/* <h5>Add company details</h5> */}
               <Form>
                 <Form.Group controlId="companyName">
-                  <Form.Label>Company Name</Form.Label>
+                  <Form.Label>
+                    Company Name<span style={{ color: "red" }}>*</span>
+                  </Form.Label>
                   <Form.Control
                     type="text"
                     placeholder="Enter company name"
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
+                  />
+                </Form.Group>
+
+                <Form.Group controlId="mobileNumber">
+                  <Form.Label>
+                    Mobile Number <span style={{ color: "red" }}>*</span>
+                  </Form.Label>
+                  <Form.Control
+                    type="tel"
+                    value={mobileNumber}
+                    onChange={(e) => setMobileNumber(e.target.value)}
+                    placeholder="Enter your mobile number"
+                    required
                   />
                 </Form.Group>
 
@@ -354,7 +387,20 @@ const CreatedCompanies = () => {
                   onClick={handleSubmitRequest}
                   disabled={!companyName || !description}
                 >
-                  Submit
+                  {loading ? (
+                    <>
+                      <Spinner
+                        as="span"
+                        animation="border"
+                        size="sm"
+                        role="status"
+                        aria-hidden="true"
+                      />{" "}
+                      Submitting...
+                    </>
+                  ) : (
+                    "Submit"
+                  )}
                 </Button>
               </Form>
             </Card>
@@ -380,7 +426,9 @@ const CreatedCompanies = () => {
                 }}
               >
                 <Form.Group controlId="userEmail">
-                  <Form.Label>User Email</Form.Label>
+                  <Form.Label>
+                    User Email <span style={{ color: "red" }}>*</span>
+                  </Form.Label>
                   <Form.Control
                     type="email"
                     placeholder="Enter user email"
@@ -389,9 +437,23 @@ const CreatedCompanies = () => {
                     required
                   />
                 </Form.Group>
+                <Form.Group controlId="mobileNumber">
+                  <Form.Label>
+                    Mobile Number <span style={{ color: "red" }}>*</span>
+                  </Form.Label>
+                  <Form.Control
+                    type="tel"
+                    value={mobileNumber}
+                    onChange={(e) => setMobileNumber(e.target.value)}
+                    placeholder="Enter your mobile number"
+                    required
+                  />
+                </Form.Group>
 
                 <Form.Group controlId="userRole" className="mt-3">
-                  <Form.Label>User Role</Form.Label>
+                  <Form.Label>
+                    User Role<span style={{ color: "red" }}>*</span>
+                  </Form.Label>
                   <Form.Select
                     value={selectedRole}
                     onChange={(e) => setSelectedRole(e.target.value)}
@@ -413,10 +475,23 @@ const CreatedCompanies = () => {
                   className="mt-3"
                   variant="primary"
                   type="submit"
-                  disabled={!inviteEmail}
+                  disabled={!inviteEmail && !mobileNumber && !selectedRole}
                   onClick={handleSendInvite}
                 >
-                  Send Invite
+                  {loading ? (
+                    <>
+                      <Spinner
+                        as="span"
+                        animation="border"
+                        size="sm"
+                        role="status"
+                        aria-hidden="true"
+                      />{" "}
+                      Sending...
+                    </>
+                  ) : (
+                    "Send Invite"
+                  )}
                 </Button>
               </Form>
             </Card>
@@ -429,6 +504,7 @@ const CreatedCompanies = () => {
         onClose={() => setShowCreditRequestModal(false)}
         companyName={selectedCompany?.companyName}
         onSend={handleSendRequestForCredits}
+        showCreditPriceUnit={true} // 👈 show field + default 5
       />
 
       <ToastContainer position="top-end" className="p-3">

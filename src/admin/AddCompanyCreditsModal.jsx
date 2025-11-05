@@ -5,11 +5,13 @@ import adminCompanyCreditApi from "../api/adminCompanyCredit";
 
 const AddCompanyCreditsModal = ({ show, onHide, company, onSave }) => {
   const [creditToAdd, setCreditToAdd] = useState(0);
+  const [addCPU, setAddCPU] = useState(0);
   const handleSave = async () => {
     try {
       await adminCompanyCreditApi.addCredits(
         company.companyName,
-        creditToAdd
+        creditToAdd,
+        addCPU
       );
       const response = await adminCompanyCreditApi.getCompanyCreditList();
       onSave(response.data,company.companyName);
@@ -18,6 +20,7 @@ const AddCompanyCreditsModal = ({ show, onHide, company, onSave }) => {
         `Successfully assigned ${creditToAdd} credits to ${company.companyName}`
       );
       setCreditToAdd(0);
+      setAddCPU(0);
     } catch (error) {
       console.error("Error adding credits", error);
       toast.error("Failed to assign credits");
@@ -42,6 +45,15 @@ const AddCompanyCreditsModal = ({ show, onHide, company, onSave }) => {
               type="number"
               value={creditToAdd}
               onChange={(e) => setCreditToAdd(parseInt(e.target.value))}
+              min={1}
+            />
+          </Form.Group>
+            <Form.Group>
+            <Form.Label>Enter credit price unit to add:</Form.Label>
+            <Form.Control
+              type="number"
+              value={addCPU}
+              onChange={(e) => setAddCPU(parseInt(e.target.value))}
               min={1}
             />
           </Form.Group>

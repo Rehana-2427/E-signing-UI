@@ -1,16 +1,15 @@
-// src/pages/credits/CompanyCreditTransactionHistory.jsx
 import { useEffect, useState } from "react";
 import { Button, Spinner, Table } from "react-bootstrap";
-import { useNavigate, useParams } from "react-router-dom";
-import adminCompanyCreditApi from "../../../api/adminCompanyCredit";
+import { useLocation, useNavigate } from "react-router-dom";
+import adminCompanyCreditApi from "../api/adminCompanyCredit";
 
-const CompanyCreditTransactionHistory = () => {
+const CompanyCreditPassBook = () => {
   const navigate = useNavigate();
-  const { companyName } = useParams();
   const [companyCredits, setCompanyCredits] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const location = useLocation();
+  const companyName = location.state?.companyName;
   useEffect(() => {
     const fetchCompanyCreditsByCompany = async () => {
       try {
@@ -48,7 +47,10 @@ const CompanyCreditTransactionHistory = () => {
     <>
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h1>
-          <strong>Credit Transaction Report <strong>{decodeURIComponent(companyName)}</strong></strong>
+          <strong>
+            Credit Transaction Report{" "}
+            <strong>{decodeURIComponent(companyName)}</strong>
+          </strong>
         </h1>
         <Button onClick={() => navigate(-1)}>Back</Button>
       </div>
@@ -73,6 +75,7 @@ const CompanyCreditTransactionHistory = () => {
       ) : transactions.length === 0 ? (
         <p>No credit usage found.</p>
       ) : (
+        
           <Table striped bordered hover responsive>
             <thead>
               <tr>
@@ -104,4 +107,4 @@ const CompanyCreditTransactionHistory = () => {
   );
 };
 
-export default CompanyCreditTransactionHistory;
+export default CompanyCreditPassBook;

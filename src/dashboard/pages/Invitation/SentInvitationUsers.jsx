@@ -41,12 +41,13 @@ const SentInvitationUsers = () => {
 
   return (
     <div>
-    <Table hover>
+      <Table hover>
         <thead>
           <tr>
             <th>User Email</th>
-            <th>Company Name</th>
+            <th>Mobile Number</th>
             <th>Role</th>
+            <th>Company Name</th>
             <th>Invitation Status</th>
             <th>Accepted At</th>
           </tr>
@@ -54,14 +55,13 @@ const SentInvitationUsers = () => {
         <tbody>
           {invitations.length === 0 ? (
             <tr>
-              <td colSpan="5" style={{ textAlign: "center" }}>
-                No invitations found.
-              </td>
+              <td colSpan="5">No invitations found.</td>
             </tr>
           ) : (
             invitations.map((invitation, index) => (
               <tr key={index}>
                 <td>{invitation.userEmail}</td>
+                <td>{invitation.mobileNumber}</td>
                 <td>{invitation.companyName}</td>
                 <td>{invitation.role}</td>
                 <td>{invitation.invitationStatus}</td>

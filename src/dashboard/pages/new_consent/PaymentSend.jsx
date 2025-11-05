@@ -3,6 +3,7 @@ import { Button, Card, Form, Spinner } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import adminApi from "../../../api/adminApi";
+import adminCompanyCreditApi from "../../../api/adminCompanyCredit";
 import adminUserCreditApi from "../../../api/adminUserCreditApi";
 import companyApi from "../../../api/company";
 import companyUserApi from "../../../api/companyUsers";
@@ -18,6 +19,8 @@ const PaymentSend = ({ onPrevious, formData }) => {
   const signatoryCount = formData.signatories?.length || 0;
   const [docCost, setDocCost] = useState(0);
   const [signCost, setSignCost] = useState(0);
+  const [reviewerCost, setReviewerCost] = useState(0);
+  const reviewerCount = formData.reviewers?.length || 0;
   const [totalCredits, setTotalCredits] = useState(0);
   const [confirmSend, setConfirmSend] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -25,8 +28,30 @@ const PaymentSend = ({ onPrevious, formData }) => {
   const [errorMsg, setErrorMsg] = useState("");
   const [userCompanies, setUserCompanies] = useState([]);
   const [assignedCompanies, setAssignedCompanies] = useState([]);
-  const [creditSource, setCreditSource] = useState("user"); // "user" or "company"
+  // const [creditSource, setCreditSource] = useState("user"); // "user" or "company"
   const [selectedCompany, setSelectedCompany] = useState("");
+  const [companyCredits, setCompanyCredits] = useState(null);
+  const [creditSource, setCreditSource] = useState(
+    formData.creditSource || "user"
+  );
+
+  console.log("from data in payment", formData);
+  useEffect(() => {
+    const fetchCompanyCreditsByCompany = async () => {
+      if (!selectedCompany) return;
+
+      try {
+        const response = await adminCompanyCreditApi.getCompanyCreditsByCompany(
+          selectedCompany
+        );
+        setCompanyCredits(response.data);
+      } catch (error) {
+        console.error("Error fetching company credits by company:", error);
+      }
+    };
+
+    fetchCompanyCreditsByCompany();
+  }, [selectedCompany]);
 
   useEffect(() => {
     const fetchUserCompanies = async () => {
@@ -34,7 +59,6 @@ const PaymentSend = ({ onPrevious, formData }) => {
         const user = JSON.parse(localStorage.getItem("user"));
         if (!user) return;
 
-        // Assuming this endpoint exists and returns a list of companies created by the user
         const response = await companyApi.getCompaniesByEmail(user.userEmail);
         setUserCompanies(response.data || []);
 
@@ -49,9 +73,13 @@ const PaymentSend = ({ onPrevious, formData }) => {
 
     fetchUserCompanies();
   }, []);
+
   useEffect(() => {
     fetchUserCredits();
-  }, []);
+    if (selectedCompany) {
+      fetchCompanyCredits();
+    }
+  }, [selectedCompany]);
 
   const fetchUserCredits = async () => {
     try {
@@ -64,6 +92,16 @@ const PaymentSend = ({ onPrevious, formData }) => {
     }
   };
 
+  const fetchCompanyCredits = async () => {
+    try {
+      const response = await adminCompanyCreditApi.getCompanyCreditsByCompany(
+        selectedCompany
+      );
+      setCompanyCredits(response.data);
+    } catch (error) {
+      console.error("Error fetching user credits", error);
+    }
+  };
   // Fetch cost settings from admin API
   useEffect(() => {
     adminApi
@@ -71,6 +109,7 @@ const PaymentSend = ({ onPrevious, formData }) => {
       .then((res) => {
         setDocCost(res.data.docCost);
         setSignCost(res.data.signCost);
+        setReviewerCost(res.data.reviwerCost);
       })
       .catch((err) => {
         console.error("Failed to load credit settings", err);
@@ -102,11 +141,14 @@ const PaymentSend = ({ onPrevious, formData }) => {
   }, [userEmail]);
 
   // Credit cost calculations
+  //common credits
   const documentCharge = docCost;
   const signatoryCharge = signCost * signatoryCount;
+  const reviewerCharge = reviewerCount > 0 ? reviewerCost * reviewerCount : 0;
   const usedCredits = totalCredits || 0;
   const balancedCredits = documentCharge - signatoryCharge - usedCredits;
 
+  //personal
   const creditDeduction = 20;
   const originalBalance = userCredits?.balanceCredit || 0;
   const originalUsed = userCredits?.usedCredit || 0;
@@ -115,20 +157,47 @@ const PaymentSend = ({ onPrevious, formData }) => {
   const predictedBalance = originalBalance - creditDeduction;
   const predictedUsed = originalUsed + creditDeduction;
 
+  //company
+  const companyCreditDeduction = 2;
+  const orignalCompanyBalance = companyCredits?.balanceCredit || 0;
+  const originalCompanyUsed = companyCredits?.usedCredit || 0;
+
+  const predictedCompanyBalance = orignalCompanyBalance - companyCreditDeduction;
+  const predictedCompanyUsed = originalCompanyUsed + companyCreditDeduction;
+  const paidCredits = companyCredits?.paidCredits || 0;
   const handleConfirmSend = async () => {
     setErrorMsg("");
 
-    // Basic validation: check if required document details are present
-    if (
-      !formData.documentId ||
-      !formData.documentName ||
-      !formData.signatories ||
-      formData.signatories.length === 0 ||
-      (!formData.file && !formData.editedPdfBlob)
-    ) {
-      setErrorMsg("Please fill document details first and then send.");
-      return;
+    // Credit validation
+    if (creditSource === "company") {
+      if (!selectedCompany || !companyCredits) {
+        Swal.fire(
+          "Error",
+          "Please select a company with sufficient credits.",
+          "error"
+        );
+        return;
+      }
+
+      if (companyCredits.balanceCredit < companyCreditDeduction) {
+        Swal.fire(
+          "Insufficient Company Credits",
+          "The selected company does not have the minimum 20 credits required to send the document.",
+          "error"
+        );
+        return;
+      }
+    } else {
+      if (originalBalance < creditDeduction) {
+        Swal.fire(
+          "Insufficient Personal Credits",
+          "You do not have enough credits to send this document.",
+          "error"
+        );
+        return;
+      }
     }
+
     setIsLoading(true);
 
     const formDataToSend = new FormData();
@@ -150,12 +219,19 @@ const PaymentSend = ({ onPrevious, formData }) => {
       sendFinalCopy: formData.sendFinalCopy || false,
       documentCharge,
       signatoryCharge,
+      reviewerCharge,
       totalCredits,
       draft: false,
       signers: formData.signatories.map((s) => ({
         name: s.name,
         email: s.email,
       })),
+      reviewers: formData.reviewers.map((r) => ({
+        reviewerEmail: r.email,
+      })),
+      ...(creditSource === "company" && selectedCompany
+        ? { companyName: selectedCompany }
+        : {}),
     };
 
     formDataToSend.append(
@@ -167,34 +243,53 @@ const PaymentSend = ({ onPrevious, formData }) => {
     try {
       const saveResponse = await documentApi.saveDocument(formDataToSend);
 
-      if (originalBalance < creditDeduction) {
-        Swal.fire(
-          "Insufficient Credits",
-          "You do not have enough credits to send this document.",
-          "error"
-        );
-        setIsLoading(false);
-        return;
+      if (creditSource === "company") {
+        if (companyCredits.balanceCredit < companyCreditDeduction) {
+          Swal.fire(
+            "Insufficient Company Credits",
+            "The selected company does not have enough credits.",
+            "error"
+          );
+          setIsLoading(false);
+          return;
+        }
+
+        // Update company credits
+        await adminCompanyCreditApi.updateCompanyCredits(selectedCompany, {
+          balanceCredit: predictedCompanyBalance,
+          usedCredit: predictedCompanyUsed,
+        });
+
+        // Log transaction
+        await adminCompanyCreditApi.saveCreditTransaction({
+          userEmail,
+          companyName: selectedCompany,
+          usedCredits: predictedCompanyUsed,
+          balanceCredits: predictedCompanyBalance,
+          paidCredits,
+          date: new Date().toISOString(),
+          documentId: saveResponse.data.documentId,
+          documentName: formData.documentName,
+        });
+      } else {
+        // Update personal credits
+        await adminUserCreditApi.updateUserCredits(userEmail, {
+          balanceCredit: predictedBalance,
+          usedCredit: predictedUsed,
+        });
+
+        // Log user transaction
+        await adminUserCreditApi.saveCreditTransaction({
+          userEmail,
+          usedCredits: predictedUsed,
+          balanceCredits: predictedBalance,
+          creditsBought,
+          date: new Date().toISOString(),
+          documentId: saveResponse.data.documentId,
+          documentName: formData.documentName,
+        });
       }
 
-      // Update credits in backend
-      await adminUserCreditApi.updateUserCredits(userEmail, {
-        balanceCredit: predictedBalance,
-        usedCredit: predictedUsed,
-      });
-
-      // Save transaction
-      await adminUserCreditApi.saveCreditTransaction({
-        userEmail,
-        usedCredits: predictedUsed,
-        balanceCredits: predictedBalance,
-        creditsBought,
-        date: new Date().toISOString(),
-        documentId: saveResponse.data.documentId,
-        documentName: formData.documentName,
-      });
-
-      // Update local state to reflect new credit status
       setUserCredits((prev) => ({
         ...prev,
         balanceCredit: predictedBalance,
@@ -234,46 +329,71 @@ const PaymentSend = ({ onPrevious, formData }) => {
       </h4>
       <p>Confirm the charges before sending the document for signing.</p>
 
-      {(userCompanies.length > 0 || assignedCompanies.length > 0) && (
-        <div className="mb-3">
-          <h5>Choose Credit Source</h5>
-          <Form.Check
-            type="radio"
-            label="Use My Credits"
-            name="creditSource"
-            value="user"
-            checked={creditSource === "user"}
-            onChange={(e) => setCreditSource(e.target.value)}
-          />
-          <Form.Check
-            type="radio"
-            label="Use Company Credits"
-            name="creditSource"
-            value="company"
-            checked={creditSource === "company"}
-            onChange={(e) => setCreditSource(e.target.value)}
-          />
+      <div className="mb-3">
+        <h5>Choose Credit Source</h5>
 
-          {creditSource === "company" && (
-            <Form.Group controlId="selectCompany" className="mt-2">
-              <Form.Label>Select Company</Form.Label>
-              <Form.Select
-                value={selectedCompany}
-                onChange={(e) => setSelectedCompany(e.target.value)}
-              >
-                <option value="">-- Select Company --</option>
-                {mergedCompanies.map((company) => (
-                  <option key={company.id} value={company.companyName}>
-                    {company.companyName}
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
-          )}
-        </div>
-      )}
+        <Form.Check
+          type="radio"
+          label="Use My Credits"
+          name="creditSource"
+          value="user"
+          checked={creditSource === "user"}
+          onChange={(e) => setCreditSource(e.target.value)}
+        />
+
+        <Form.Check
+          type="radio"
+          label="Use Company Credits"
+          name="creditSource"
+          value="company"
+          checked={creditSource === "company"}
+          onChange={(e) => setCreditSource(e.target.value)}
+          disabled={mergedCompanies.length === 0}
+        />
+
+        {creditSource === "company" && mergedCompanies.length === 0 && (
+          <div className="mt-3 text-danger">
+            <strong>Sorry!</strong> You don’t have access to any company
+            accounts.
+            <br />
+            You are not eligible to use company credits. Please contact your
+            administrator if you believe this is an error.
+          </div>
+        )}
+
+        {creditSource === "company" && mergedCompanies.length > 0 && (
+          <Form.Group controlId="selectCompany" className="mt-3">
+            <Form.Label>Select Company</Form.Label>
+            <Form.Select
+              value={selectedCompany}
+              onChange={(e) => setSelectedCompany(e.target.value)}
+            >
+              <option value="">-- Select Company --</option>
+              {mergedCompanies.map((company) => (
+                <option key={company.id} value={company.companyName}>
+                  {company.companyName}
+                </option>
+              ))}
+            </Form.Select>
+          </Form.Group>
+        )}
+      </div>
 
       <div className="mb-4">
+        {creditSource === "company" && companyCredits && (
+          <div className="mb-4">
+            <h4>Company Credits Summary</h4>
+            <p>
+              <strong>Used Credits:</strong> {companyCredits.usedCredit}{" "}
+              &nbsp;||&nbsp;
+              <strong>Balance Credits:</strong> {companyCredits.balanceCredit}{" "}
+              &nbsp;||&nbsp;
+              <strong>Company Credits Deduction:</strong>
+              {companyCreditDeduction}
+            </p>
+          </div>
+        )}
+
         <h4>Charges Summary</h4>
         <p>
           <strong>Document Charges:</strong> {documentCharge} credits
@@ -281,6 +401,10 @@ const PaymentSend = ({ onPrevious, formData }) => {
         <p>
           <strong>Signatory Charges:</strong> {signatoryCount} × {signCost} ={" "}
           {signatoryCharge} credits
+        </p>
+        <p>
+          <strong>Reviewer Charges:</strong> {reviewerCount || 0} ×{" "}
+          {reviewerCost} = {reviewerCharge} credits
         </p>
         <p>
           <strong>Previously Used Credits:</strong> {usedCredits}
@@ -301,7 +425,6 @@ const PaymentSend = ({ onPrevious, formData }) => {
           <strong>Used Credits:</strong> {predictedUsed}
         </p>
       </div>
-
 
       <Form.Check
         type="checkbox"

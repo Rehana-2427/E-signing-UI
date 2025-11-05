@@ -20,12 +20,17 @@ const MyCompanies = () => {
   };
 
   return (
-    <>
+    <div
+      className="scrollable-container"
+      style={{
+        height: "100%",
+      }}
+    >
       <h1>
         <strong>My Companies</strong>
       </h1>
       <Tabs
-        activeKey={tab || "created"} // fallback to "created" for initial render
+        activeKey={tab || "created"}
         onSelect={handleSelect}
         id="my-companies-tabs"
         className="mb-3"
@@ -37,7 +42,8 @@ const MyCompanies = () => {
           <AssignedComapnies />
         </Tab>
       </Tabs>
-    </>
+      
+    </div>
   );
 };
 

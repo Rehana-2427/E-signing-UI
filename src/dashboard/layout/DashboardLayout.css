@@ -59,7 +59,7 @@ body {
 .content-container {
   transition: all 0.3s ease;
   height: 100%;
-  overflow-y: auto;
+  /* overflow-y: auto; */
   background-color: #fff;
   padding: 16px;
 }
@@ -73,3 +73,5 @@ body {
 .content-container.expand {
   width: 100%;
 }
+
+

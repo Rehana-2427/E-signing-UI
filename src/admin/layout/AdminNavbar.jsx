@@ -18,6 +18,7 @@ const AdminNavbar = ({ toggleSidebar }) => {
       }
     }
   };
+
   useEffect(() => {
     fetchUnseenRequests(); // Initial fetch
 
@@ -63,7 +64,7 @@ const AdminNavbar = ({ toggleSidebar }) => {
   console.log(unseenRequests);
 
   return (
-    <div className="navbar navbar-expand-lg navbar-light shadow-sm px-3 ">
+    <div className="navbar navbar-expand-lg navbar-light shadow-sm px-3">
       <Link to="/" className="navbar-brand d-flex align-items-center">
         <img src="/assets/images/logo.png" alt="Logo" height="50" />
       </Link>
@@ -90,7 +91,21 @@ const AdminNavbar = ({ toggleSidebar }) => {
             className="i-Bell text-muted header-icon"
             onClick={handleBellClick}
           />
-
+          {unseenRequests.length == 0 && (
+            <span
+              className="badge bg-danger position-absolute top-0 start-100 translate-middle rounded-circle"
+              style={{
+                width: "20px",
+                height: "20px",
+                fontSize: "0.75rem",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              0
+            </span>
+          )}
           {unseenRequests.length > 0 && (
             <span
               className="badge bg-danger position-absolute top-0 start-100 translate-middle rounded-circle"
@@ -154,12 +169,25 @@ const AdminNavbar = ({ toggleSidebar }) => {
                                 <br />
                                 Requested by: {req.userName} ({req.userEmail})
                                 <br />
-                                Credits: <strong>{req.requestedCredits}</strong>
+                                {req.requestCPUnit !== 0 ? (
+                                  <>
+                                    Credit Price Unit: <strong>{req.requestCPUnit}</strong> ₹
+                                  </>
+                                ) : (
+                                  <>
+                                    Credits: <strong>{req.requestedCredits}</strong>
+                                  </>
+                                )}
                               </>
                             ) : (
                               <>
                                 {req.userEmail} – Requested:{" "}
-                                <strong>{req.requestedCredits}</strong> credits
+                                <strong>
+                                  {req.requestCPUnit !== 0
+                                    ? req.requestCPUnit + " ₹"
+                                    : req.requestedCredits}
+                                </strong>{" "}
+                                {req.requestCPUnit === 0 ? "credits" : "credit price unit"}
                               </>
                             )}
                           </div>

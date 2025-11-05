@@ -3,7 +3,12 @@ import InvitedUsers from "./InvitedUsers";
 
 const Invitations = () => {
   return (
-    <>
+    <div
+      className="scrollable-container"
+      style={{
+        height: "100%",
+      }}
+    >
       <h1>
         <strong>Invitations</strong>
       </h1>
@@ -15,7 +20,7 @@ const Invitations = () => {
           <InvitedUsers type="received" />
         </Tab>
       </Tabs>
-    </>
+    </div>
   );
 };
 

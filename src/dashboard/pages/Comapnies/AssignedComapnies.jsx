@@ -1,18 +1,19 @@
 import { useEffect, useState } from "react";
 import {
-    Button,
-    Card,
-    Form,
-    Modal,
-    OverlayTrigger,
-    Spinner,
-    Table,
-    Tooltip,
+  Button,
+  Card,
+  Form,
+  Modal,
+  OverlayTrigger,
+  Spinner,
+  Table,
+  Tooltip,
 } from "react-bootstrap";
-import { FaEye, FaUserMinus, FaUserPlus } from "react-icons/fa";
+import { FaUserPlus } from "react-icons/fa";
 import { TbBuildingMinus } from "react-icons/tb";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import adminCompanyCreditApi from "../../../api/adminCompanyCredit";
 import adminUserCreditApi from "../../../api/adminUserCreditApi";
 import companyApi from "../../../api/company";
 import companyUserApi from "../../../api/companyUsers";
@@ -32,24 +33,66 @@ const AssignedComapnies = () => {
   const [selectedRole, setSelectedRole] = useState("SENDER"); // Default value is "Sender"
   const user = JSON.parse(localStorage.getItem("user"));
   const userName = user?.userName;
+  const [companyCredits, setCompanyCredits] = useState({});
 
   // Function to fetch the assigned companies
+  // const fetchCompanies = async () => {
+  //   try {
+  //     if (!user?.userEmail) return;
+
+  //     const response = await companyUserApi.getAssignedCompanies(
+  //       user.userEmail
+  //     );
+  //     setCompanies(response.data || []);
+  //   } catch (error) {
+  //     console.error("Error fetching companies:", error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
   const fetchCompanies = async () => {
     try {
+      const user = JSON.parse(localStorage.getItem("user"));
       if (!user?.userEmail) return;
 
       const response = await companyUserApi.getAssignedCompanies(
         user.userEmail
       );
-      setCompanies(response.data || []);
+      const companiesData = response.data || [];
+      setCompanies(companiesData);
+
+      const creditPromises = companiesData.map(async (company) => {
+        try {
+          const res = await adminCompanyCreditApi.getCompanyCreditsByCompany(
+            company.companyName
+          );
+          return { name: company.companyName, credits: res.data };
+        } catch (error) {
+          console.error(
+            `Error fetching credits for ${company.companyName}:`,
+            error
+          );
+          return { name: company.companyName, credits: null };
+        }
+      });
+
+      const creditResults = await Promise.all(creditPromises);
+
+      // Map results into an object for quick lookup
+      const creditsMap = {};
+      creditResults.forEach((item) => {
+        creditsMap[item.name] = item.credits;
+      });
+
+      setCompanyCredits(creditsMap);
     } catch (error) {
       console.error("Error fetching companies:", error);
     } finally {
       setLoading(false);
     }
   };
-
   // Effect to fetch companies when component mounts
+
   useEffect(() => {
     fetchCompanies();
   }, []);
@@ -169,56 +212,63 @@ const AssignedComapnies = () => {
                 <th>Description</th>
                 <th>Invited By</th>
                 <th>Role</th>
+                <th>Balance Credits</th>
+                <th>Used Credits</th>
                 <th>Credit Request</th>
                 <th>Used Credits</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {companies.map((company, index) => (
-                <tr key={index}>
-                  <td>
-                    {company.companyName} - {getInitials(userName)}
-                  </td>
-                  <td>
-                    <OverlayTrigger
-                      placement="top"
-                      overlay={
-                        <Tooltip id={`tooltip-desc-${company.id}`}>
-                          {company.description}
-                        </Tooltip>
-                      }
-                    >
-                      <span style={{ cursor: "pointer" }}>
-                        {truncate(company.description)}
-                      </span>
-                    </OverlayTrigger>
-                  </td>
-                  <td>{company.invitedByEmail}</td>
-                  <td>{company.role}</td>
-                  <td>
-                    <Button onClick={() => handleRequestForCredits(company)}>
-                      Request for Credits
-                    </Button>
-                  </td>
-                  <td>
-                    <Button
-                      variant="link"
-                      size="sm"
-                      onClick={() => {
-                        const encodedName = encodeURIComponent(
-                          company.companyName
-                        );
-                        navigate(
-                          `/dashboard/creditRequest/my-companies/${encodedName}/company-transaction-history`
-                        );
-                      }}
-                    >
-                      Company Credits
-                    </Button>
-                  </td>
-                  <td>
-                    <OverlayTrigger
+              {companies.map((company, index) => {
+                const credits = companyCredits[company.companyName];
+                return (
+                  <tr key={index}>
+                    <td>
+                      {company.companyName} - {getInitials(userName)}
+                    </td>
+                    <td>
+                      <OverlayTrigger
+                        placement="top"
+                        overlay={
+                          <Tooltip id={`tooltip-desc-${company.id}`}>
+                            {company.description}
+                          </Tooltip>
+                        }
+                      >
+                        <span style={{ cursor: "pointer" }}>
+                          {truncate(company.description)}
+                        </span>
+                      </OverlayTrigger>
+                    </td>
+                    <td>{company.invitedByEmail}</td>
+                    <td>{company.role}</td>
+                    <td>{credits ? credits.balanceCredit : "Loading..."}</td>
+                    <td>{credits ? credits.usedCredit : "Loading..."}</td>
+
+                    <td>
+                      <Button onClick={() => handleRequestForCredits(company)}>
+                        Request for Credits
+                      </Button>
+                    </td>
+                    <td>
+                      <Button
+                        variant="link"
+                        size="sm"
+                        onClick={() => {
+                          const encodedName = encodeURIComponent(
+                            company.companyName
+                          );
+                          navigate(
+                            `/dashboard/creditRequest/my-companies/${encodedName}/company-transaction-history`
+                          );
+                        }}
+                      >
+                        Company Credits
+                      </Button>
+                    </td>
+                    <td>
+                      {/* <OverlayTrigger
                       placement="top"
                       overlay={
                         <Tooltip id={`tooltip-view-${company.id}`}>
@@ -234,27 +284,27 @@ const AssignedComapnies = () => {
                       >
                         <FaEye />
                       </Button>
-                    </OverlayTrigger>
+                    </OverlayTrigger> */}
 
-                    <OverlayTrigger
-                      placement="top"
-                      overlay={
-                        <Tooltip id={`tooltip-add-${company.id}`}>
-                          Add Users
-                        </Tooltip>
-                      }
-                    >
-                      <Button
-                        size="sm"
-                        variant="success"
-                        className="me-1 mb-1"
-                        onClick={() => handleShowAddUserModal(company)}
+                      <OverlayTrigger
+                        placement="top"
+                        overlay={
+                          <Tooltip id={`tooltip-add-${company.id}`}>
+                            Add Users
+                          </Tooltip>
+                        }
                       >
-                        <FaUserPlus />
-                      </Button>
-                    </OverlayTrigger>
+                        <Button
+                          size="sm"
+                          variant="success"
+                          className="me-1 mb-1"
+                          onClick={() => handleShowAddUserModal(company)}
+                        >
+                          <FaUserPlus />
+                        </Button>
+                      </OverlayTrigger>
 
-                    <OverlayTrigger
+                      {/* <OverlayTrigger
                       placement="top"
                       overlay={
                         <Tooltip id={`tooltip-delete-${company.id}`}>
@@ -270,30 +320,31 @@ const AssignedComapnies = () => {
                       >
                         <FaUserMinus />
                       </Button>
-                    </OverlayTrigger>
+                    </OverlayTrigger> */}
 
-                    <OverlayTrigger
-                      placement="top"
-                      overlay={
-                        <Tooltip id={`tooltip-delete-company-${company.id}`}>
-                          Delete Company
-                        </Tooltip>
-                      }
-                    >
-                      <Button
-                        size="sm"
-                        variant="danger"
-                        className="me-1 mb-1"
-                        onClick={() =>
-                          console.log("Delete Company", company.id)
+                      <OverlayTrigger
+                        placement="top"
+                        overlay={
+                          <Tooltip id={`tooltip-delete-company-${company.id}`}>
+                            Delete Company
+                          </Tooltip>
                         }
                       >
-                        <TbBuildingMinus />
-                      </Button>
-                    </OverlayTrigger>
-                  </td>
-                </tr>
-              ))}
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          className="me-1 mb-1"
+                          onClick={() =>
+                            console.log("Delete Company", company.id)
+                          }
+                        >
+                          <TbBuildingMinus />
+                        </Button>
+                      </OverlayTrigger>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </Table>
         </>
@@ -359,6 +410,7 @@ const AssignedComapnies = () => {
         onClose={() => setShowCreditRequestModal(false)}
         companyName={selectedCompany?.companyName}
         onSend={handleSendRequestForCredits}
+        showCreditPriceUnit={false} // 👈 hide field
       />
     </>
   );

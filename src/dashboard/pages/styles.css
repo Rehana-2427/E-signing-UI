@@ -1,0 +1,11 @@
+/* styles.css */
+.scrollable-container {
+  overflow-y: auto; /* Enables vertical scrolling */
+  height: 100%; /* Full height of the container */
+  scrollbar-width: none; /* Firefox: Hide scrollbar */
+  ms-overflow-style: none; /* IE/Edge: Hide scrollbar */
+}
+
+.scrollable-container::-webkit-scrollbar {
+  display: none; /* Chrome/Safari: Hide scrollbar */
+}

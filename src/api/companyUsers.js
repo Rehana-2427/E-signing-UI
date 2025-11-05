@@ -41,5 +41,10 @@ const companyUserApi = {
     apiClient.get(`/getAssignedCompanies`, {
       params: { userEmail },
     }),
+
+  getUsersByCompanyName: (companyName) =>
+    apiClient.get("/getUserByCompanyName", {
+      params: { companyName },
+    }),
 };
 export default companyUserApi;

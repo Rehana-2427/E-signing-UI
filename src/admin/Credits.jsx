@@ -6,6 +6,7 @@ import adminApi from "../api/adminApi";
 const Credits = () => {
   const [docCost, setDocCost] = useState(0);
   const [signCost, setSignCost] = useState(0);
+  const [reviewerCost, setReviewerCost] = useState(0);
   const [historyVisible, setHistoryVisible] = useState(false);
   const [creditHistory, setCreditHistory] = useState([]);
   const [showToast, setShowToast] = useState(false);
@@ -15,19 +16,18 @@ const Credits = () => {
     fetchCreditHistory();
   }, []);
 
-
   const saveSettings = async () => {
     try {
       setIsSaving(true);
-      await adminApi.saveCreditSettings(docCost, signCost);
+      await adminApi.saveCreditSettings(docCost, signCost,reviewerCost);
       setShowToast(true);
       fetchCreditHistory();
-      setDocCost(0);       
+      setDocCost(0);
       setSignCost(0);
+      setReviewerCost(0);
     } catch (error) {
       console.error("Error saving settings");
-    }
-    finally {
+    } finally {
       setIsSaving(false);
     }
   };
@@ -54,7 +54,9 @@ const Credits = () => {
           <Toast.Body>Settings updated!</Toast.Body>
         </Toast>
       </ToastContainer>
-      <h1><strong>Credit Settings</strong></h1>
+      <h1>
+        <strong>Credit Settings</strong>
+      </h1>
       <div style={{ marginBottom: 10 }}>
         <label>Document Credit: </label>
         <input
@@ -64,17 +66,24 @@ const Credits = () => {
         />
       </div>
       <div style={{ marginBottom: 10 }}>
-        <label>Signature Credit: </label>
+        <label>Signer Credit: </label>
         <input
           type="number"
           value={signCost}
           onChange={(e) => setSignCost(parseInt(e.target.value))}
         />
       </div>
+      <div style={{ marginBottom: 10 }}>
+        <label>Reviewer Credit: </label>
+        <input
+          type="number"
+          value={reviewerCost}
+          onChange={(e) => setReviewerCost(parseInt(e.target.value))}
+        />
+      </div>
       <Button onClick={saveSettings} disabled={isSaving}>
         {isSaving ? "Saving..." : "Save Settings"}
       </Button>
-
 
       <div style={{ marginTop: 30 }}>
         <h4>Credit History</h4>
@@ -83,6 +92,7 @@ const Credits = () => {
             <tr>
               <th>Document Credit</th>
               <th>Signature Credit</th>
+              <th> Reviewer Credit</th>
               <th>Updated At</th>
             </tr>
           </thead>
@@ -91,6 +101,7 @@ const Credits = () => {
               <tr key={index}>
                 <td>{entry.docCost}</td>
                 <td>{entry.signCost}</td>
+                <td>{entry.reviwerCost}</td>
                 <td>{entry.updatedAt}</td>
               </tr>
             ))}
@@ -98,7 +109,6 @@ const Credits = () => {
         </Table>
       </div>
     </>
-
   );
 };
 

@@ -37,6 +37,8 @@ const adminUserCreditApi = {
 
     markAsSeen: (id) => apiClient.put(`/mark-seen/${id}`),
 
+    
+
 };
 
 export default adminUserCreditApi;

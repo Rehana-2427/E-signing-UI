@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { Button, Table } from "react-bootstrap";
 import { AiOutlineDownload } from "react-icons/ai";
+import { IoChatbubbles } from "react-icons/io5";
 import { RiFileEditFill } from "react-icons/ri";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import documentApi from "../../../api/documentapi";
 import SearchBar from "../SearchBar";
-
 const Drafts = () => {
   const [consents, setConsents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -112,6 +112,17 @@ const Drafts = () => {
   };
   if (loading) return <p>Loading consents...</p>;
 
+  const handleChat = (documentId,documentName) => {
+    if (!documentId) {
+      Swal.fire("Error", "Document ID is missing.", "error");
+      return;
+    }
+
+    navigate("/dashboard/chat-app", {
+      state: { documentId,documentName },
+    });
+  };
+
   return (
     <>
       <div
@@ -133,9 +144,13 @@ const Drafts = () => {
       <Table hover>
         <thead>
           <tr>
+            <th>#id</th>
             <th>Document Name</th>
+            <th># of Reviewers count</th>
             <th>Draft saved On</th>
-            <th># of People</th>
+            <th># of signers count</th>
+            <th>Reviewer Status</th>
+            <th>Chat</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -148,14 +163,29 @@ const Drafts = () => {
             consents.map((consent, index) => {
               const documentName =
                 consent?.documentName || consent?.document?.documentName;
+
               const createdDate = consent?.sentOn || consent?.document?.sentOn;
               const totalSigners =
                 consent?.totalSigners || consent?.signers?.length || 0;
               return (
                 <tr key={index}>
+                  <td>{consent.documentId}</td>
                   <td>{documentName}</td>
+                  <td>
+                    {consent.reviwercount} / {consent.totalReviwers}
+                  </td>
                   <td>{createdDate}</td>
                   <td>{totalSigners}</td>
+                  <td>{consent.reviewerStatus}</td>
+                  <td>
+                    <Button
+                      variant="secondary"
+                      onClick={() => handleChat(consent.documentId,consent.documentName)}
+                      title="Chat"
+                    >
+                      <IoChatbubbles />
+                    </Button>
+                  </td>
                   <td>
                     <Button
                       onClick={() =>
@@ -164,7 +194,7 @@ const Drafts = () => {
                           consent.documentName,
                           consent.editedFile
                         )
-                      } // ✅ Pass the object
+                      }
                       variant="primary"
                       size="sm"
                       className="me-2"

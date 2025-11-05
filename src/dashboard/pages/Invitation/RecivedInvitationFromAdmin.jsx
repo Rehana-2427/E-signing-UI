@@ -47,6 +47,7 @@ const RecivedInvitationFromAdmin = () => {
     // Prepare request payload
     const requestPayload = {
       userEmail: userEmail,
+      mobileNumber:invitation.mobileNumber,
       invitedByEmail: invitation.invitedByEmail,
       companyName: invitation.companyName,
       invitationStatus: newStatus,
@@ -75,6 +76,7 @@ const RecivedInvitationFromAdmin = () => {
           <tr>
             <th>Admin Email</th>
             <th>Company Name</th>
+            <th>mobileNumber</th>
             <th>Role</th>
             <th>Invitation Status</th>
             <th>Recevied At</th>
@@ -83,7 +85,7 @@ const RecivedInvitationFromAdmin = () => {
         <tbody>
           {invitations.length === 0 ? (
             <tr>
-              <td colSpan="5" style={{ textAlign: "center" }}>
+              <td colSpan="5">
                 No invitations found.
               </td>
             </tr>
@@ -92,6 +94,7 @@ const RecivedInvitationFromAdmin = () => {
               <tr key={index}>
                 <td>{invitation.invitedByEmail}</td>
                 <td>{invitation.companyName}</td>
+                <td>{invitation.mobileNumber}</td>
                 <td>{invitation.role}</td>
                 <td>
                   <InvitationStatus

@@ -1,25 +1,25 @@
 import { useEffect, useState } from "react";
 import { Tab, Tabs } from "react-bootstrap";
 import { useSearchParams } from "react-router-dom";
-import CreditRequestCompany from "./CreditRequestCompany";
-import CreditRequestUser from "./CreditRequestUser";
+import ReviewdConsents from "./ReviewdConsents";
+import UnreviewdConsesnts from "./UnreviewdConsesnts";
 
-const CreditRequest = () => {
+const ReviewerConsesnts = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const tabFromUrl = searchParams.get("tab");
-  const [creditRequestTab, setCreditRequestTab] = useState(
-    tabFromUrl || "user"
+  const [reviewerActiveTab, setReviewerActiveTab] = useState(
+    tabFromUrl || "unReviewedConsents"
   );
 
   // 🔄 Update URL when tab changes
   const handleTabChange = (key) => {
-    setCreditRequestTab(key);
+    setReviewerActiveTab(key);
     setSearchParams({ tab: key });
   };
 
   useEffect(() => {
-    if (tabFromUrl && tabFromUrl !== creditRequestTab) {
-      setCreditRequestTab(tabFromUrl);
+    if (tabFromUrl && tabFromUrl !== reviewerActiveTab) {
+      setReviewerActiveTab(tabFromUrl);
     }
   }, [tabFromUrl]);
 
@@ -31,23 +31,23 @@ const CreditRequest = () => {
       }}
     >
       <h1>
-        <strong>Credit Request</strong>
+        <strong>Review Consents</strong>
       </h1>
       <Tabs
-        activeKey={creditRequestTab}
+        activeKey={reviewerActiveTab}
         onSelect={handleTabChange}
-        id="credit-request-tabs"
+        id="reviewer-tabs"
         className="mb-3"
       >
-        <Tab eventKey="user" title="User Credit Requests">
-          <CreditRequestUser />
+        <Tab eventKey="unReviewedConsents" title="UnReviewed">
+          <UnreviewdConsesnts />
         </Tab>
-        <Tab eventKey="organization" title="Organization Credit Requests">
-          <CreditRequestCompany />
+        <Tab eventKey="reviewedConsents" title="Reviewed">
+          <ReviewdConsents />
         </Tab>
       </Tabs>
     </div>
   );
 };
 
-export default CreditRequest;
+export default ReviewerConsesnts;

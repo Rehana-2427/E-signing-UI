@@ -56,7 +56,10 @@ const Templates = () => {
   };
 
   return (
-    <div>
+    <div  className="scrollable-container" 
+      style={{
+        height: "100%", 
+      }}>
       <h1>
         <strong>Templates</strong>
       </h1>

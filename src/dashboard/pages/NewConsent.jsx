@@ -4,16 +4,18 @@ import adminUserCreditApi from "../../api/adminUserCreditApi";
 import DocumentDetails from "./new_consent/DocumentDetails";
 import PaymentSend from "./new_consent/PaymentSend";
 import SignatoriesSettings from "./new_consent/SignatoriesSettings";
-
+import "./styles.css";
 const NewConsent = () => {
   const navigate = useNavigate();
-  const { step } = useParams();  // ← Get current step from the URL
+  const { step } = useParams(); // ← Get current step from the URL
   const location = useLocation();
 
-  const currentStep = parseInt(step || 1);  // fallback to 1
+  const currentStep = parseInt(step || 1); // fallback to 1
 
   const [formData, setFormData] = useState(location.state?.formData || {});
-  const [signatureFields, setSignatureFields] = useState(formData.signatureFields || []);
+  const [signatureFields, setSignatureFields] = useState(
+    formData.signatureFields || []
+  );
   const [userCredit, setUserCredit] = useState(null);
 
   const user = JSON.parse(localStorage.getItem("user"));
@@ -30,7 +32,7 @@ const NewConsent = () => {
 
   const goToStep = (nextStep) => {
     navigate(`/dashboard/new-consent/step/${nextStep}`, {
-      state: { formData }
+      state: { formData },
     });
   };
 
@@ -38,8 +40,15 @@ const NewConsent = () => {
   const handlePrevious = () => goToStep(currentStep - 1);
 
   return (
-    <>
-      <h1><strong>New Consent</strong></h1>
+    <div
+      className="scrollable-container" 
+      style={{
+        height: "100%", 
+      }}
+    >
+      <h1>
+        <strong>New Consent</strong>
+      </h1>
       <p>Step {currentStep} of 3</p>
 
       {currentStep === 1 && (
@@ -69,7 +78,7 @@ const NewConsent = () => {
           signatureFields={signatureFields}
         />
       )}
-    </>
+    </div>
   );
 };
 

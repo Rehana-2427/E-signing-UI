@@ -30,6 +30,11 @@ const SignatoriesSettings = ({
   const [signatureFields, setSignatureFields] = useState(
     formData.signatureFields || []
   );
+  const [creditSource, setCreditSource] = useState(
+    formData.creditSource || "user"
+  );
+
+  const reviewers = formData.reviewers || [];
 
   const navigate = useNavigate();
   const [fontSettings, setFontSettings] = useState({
@@ -64,12 +69,7 @@ const SignatoriesSettings = ({
     updated[index][field] = value;
     setSignatories(updated);
   };
-  // const handleSave = (signatureFields) => {
-  //     setFormData(prev => ({
-  //         ...prev,
-  //         signatureFields // Save the signature fields in formData
-  //     }));
-  // };
+
   const handleSave = (signatureFields) => {
     setFormData((prev) => ({
       ...prev,
@@ -90,6 +90,8 @@ const SignatoriesSettings = ({
       deadline,
       reminderDays,
       sendFinalCopy,
+      creditSource,
+      reviewers,
     }));
     onNext();
   };
@@ -125,6 +127,9 @@ const SignatoriesSettings = ({
       totalCredits: 5,
       draft: true,
       signers: signatories || [],
+      reviewers: formData.reviewers.map((r) => ({
+        reviewerEmail: r.email ,
+      })),
     };
 
     const formDataToSend = new FormData();

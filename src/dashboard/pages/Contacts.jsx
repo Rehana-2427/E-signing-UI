@@ -6,72 +6,85 @@ import Swal from "sweetalert2";
 import signerApi from "../../api/signerapi";
 
 const Contacts = () => {
-    const [contacts, setContacts] = useState([]);
-    const user = JSON.parse(localStorage.getItem("user"));
-    const userEmail = user?.userEmail;
-    const navigate = useNavigate();
-    useEffect(() => {
-        if (userEmail) {
-            signerApi.getSignersContact(userEmail)
-                .then((res) => {
-                    setContacts(res.data);
-                })
-                .catch((err) => {
-                    console.error("Failed to fetch documents", err);
-                });
-        }
-    }, [userEmail]);
-
-    const handleComingSoon = () => {
-        Swal.fire({
-            icon: 'info',
-            title: 'Coming Soon!',
-            text: 'This feature is under development.',
-            confirmButtonText: 'OK'
+  const [contacts, setContacts] = useState([]);
+  const user = JSON.parse(localStorage.getItem("user"));
+  const userEmail = user?.userEmail;
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (userEmail) {
+      signerApi
+        .getSignersContact(userEmail)
+        .then((res) => {
+          setContacts(res.data);
+        })
+        .catch((err) => {
+          console.error("Failed to fetch documents", err);
         });
-    };
+    }
+  }, [userEmail]);
 
-    const handleContactClick = (signer) => {
-        navigate("/dashboard/contacts/chat", { state: { selectedContact: signer } });
-    };
-    return (
-        <>
-            <h1><strong>List of all signatories</strong></h1>
-            <Table hover>
-                <thead>
-                    <tr style={{ background: "#f0f0f0" }}>
-                        <th>Signer Name</th>
-                        <th >Signer Email</th>
-                        <th ># of documents signed</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {contacts.length === 0 ? (
-                        <tr>
-                            <td colSpan="4" >No signers found.</td>
-                        </tr>
-                    ) : (
-                        contacts.map((signer, idx) => (
-                            <tr key={idx}>
-                                <td>{signer.name}</td>
-                                <td>{signer.email}</td>
-                                <td>{signer.signedCount || 0}</td>
-                                {/* <td>
+  const handleComingSoon = () => {
+    Swal.fire({
+      icon: "info",
+      title: "Coming Soon!",
+      text: "This feature is under development.",
+      confirmButtonText: "OK",
+    });
+  };
+
+  const handleContactClick = (signer) => {
+    navigate("/dashboard/contacts/chat", {
+      state: { selectedContact: signer },
+    });
+  };
+  return (
+    <div
+      className="scrollable-container"
+      style={{
+        height: "100%",
+      }}
+    >
+      <h1>
+        <strong>List of all signatories</strong>
+      </h1>
+      <Table hover>
+        <thead>
+          <tr style={{ background: "#f0f0f0" }}>
+            <th>Signer Name</th>
+            <th>Signer Email</th>
+            <th># of documents signed</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {contacts.length === 0 ? (
+            <tr>
+              <td colSpan="4">No signers found.</td>
+            </tr>
+          ) : (
+            contacts.map((signer, idx) => (
+              <tr key={idx}>
+                <td>{signer.name}</td>
+                <td>{signer.email}</td>
+                <td>{signer.signedCount || 0}</td>
+                {/* <td>
                                     <Button variant="success" onClick={handleComingSoon}> <BiMessageRoundedDetail /></Button>
                                 </td> */}
-                                <td>
-                                    <Button variant="success" onClick={() => handleContactClick(signer)}>
-                                        <BsChatRightDotsFill  />
-                                    </Button>
-                                </td>
-                            </tr>
-                        ))
-                    )}
-                </tbody>
-            </Table>
-        </>
-    )
-}
+                <td>
+                  <Button
+                    variant="success"
+                    onClick={() => handleContactClick(signer)}
+                  >
+                    <BsChatRightDotsFill />
+                  </Button>
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </Table>
+    </div>
+  );
+};
 
-export default Contacts
+export default Contacts;

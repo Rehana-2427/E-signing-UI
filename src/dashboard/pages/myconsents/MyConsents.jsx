@@ -82,7 +82,7 @@ const MyConsents = () => {
     }
 
     navigate("/dashboard/chat-app", {
-      state: { documentId, documentName },
+      state: { documentId, documentName,chatType: "document" },
     });
   };
 

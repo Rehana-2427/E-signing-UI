@@ -7,6 +7,7 @@ const Credits = () => {
   const [docCost, setDocCost] = useState(0);
   const [signCost, setSignCost] = useState(0);
   const [reviewerCost, setReviewerCost] = useState(0);
+  const [collabCharge, setCollabCharge] = useState(0);
   const [historyVisible, setHistoryVisible] = useState(false);
   const [creditHistory, setCreditHistory] = useState([]);
   const [showToast, setShowToast] = useState(false);
@@ -19,11 +20,12 @@ const Credits = () => {
   const saveSettings = async () => {
     try {
       setIsSaving(true);
-      await adminApi.saveCreditSettings(docCost, signCost,reviewerCost);
+      await adminApi.saveCreditSettings(docCost, signCost, reviewerCost, collabCharge);
       setShowToast(true);
       fetchCreditHistory();
       setDocCost(0);
       setSignCost(0);
+      setCollabCharge(0);
       setReviewerCost(0);
     } catch (error) {
       console.error("Error saving settings");
@@ -39,7 +41,7 @@ const Credits = () => {
     });
   };
   return (
-    <>
+    <div className="scrollable-container" style={{ height: "100%" }}>
       <ToastContainer position="top-end" className="p-3">
         <Toast
           onClose={() => setShowToast(false)}
@@ -81,6 +83,16 @@ const Credits = () => {
           onChange={(e) => setReviewerCost(parseInt(e.target.value))}
         />
       </div>
+      <div style={{ marginBottom: 10 }}>
+        <label>Collaboration Credit: </label>
+        <input
+          type="number"
+          step="0.01"
+          value={collabCharge}
+          onChange={(e) => setCollabCharge(parseFloat(e.target.value))}
+        />
+      </div>
+
       <Button onClick={saveSettings} disabled={isSaving}>
         {isSaving ? "Saving..." : "Save Settings"}
       </Button>
@@ -93,6 +105,7 @@ const Credits = () => {
               <th>Document Credit</th>
               <th>Signature Credit</th>
               <th> Reviewer Credit</th>
+              <th>Collaboration Credit</th>
               <th>Updated At</th>
             </tr>
           </thead>
@@ -102,13 +115,14 @@ const Credits = () => {
                 <td>{entry.docCost}</td>
                 <td>{entry.signCost}</td>
                 <td>{entry.reviwerCost}</td>
+                <td>{entry.collabCharge}</td>
                 <td>{entry.updatedAt}</td>
               </tr>
             ))}
           </tbody>
         </Table>
       </div>
-    </>
+    </div>
   );
 };
 

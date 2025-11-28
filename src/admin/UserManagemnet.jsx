@@ -42,7 +42,7 @@ const UserManagemnet = () => {
   };
 
   return (
-    <>
+    <div className="scrollable-container" style={{ height: "100%" }}>
       <h1><strong>User Credit Management</strong></h1>
       <Table striped bordered hover>
         <thead>
@@ -102,7 +102,7 @@ const UserManagemnet = () => {
         </Toast>
       </ToastContainer>
 
-    </>
+    </div>
   );
 };
 

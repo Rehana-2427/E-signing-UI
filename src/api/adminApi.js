@@ -9,8 +9,8 @@ const apiClient = axios.create({
 });
 
 const adminApi = {
-    saveCreditSettings: (docCost, signCost,reviewerCost) =>
-        apiClient.post("/saveCredits", { docCost, signCost,reviewerCost }),
+    saveCreditSettings: (docCost, signCost,reviewerCost,collabCharge) =>
+        apiClient.post("/saveCredits", { docCost, signCost,reviewerCost,collabCharge }),
 
     getCreditSettings: () =>
         apiClient.get("/currentCredits"),
@@ -20,6 +20,7 @@ const adminApi = {
 
     getUserCreditList:() =>
         apiClient.get("/allUsersCredits"),
+    
 
 };
 

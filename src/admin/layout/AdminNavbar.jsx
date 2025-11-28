@@ -3,11 +3,13 @@ import { Button, Spinner } from "react-bootstrap";
 import { FaBars, FaCheckCircle } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import adminUserCreditApi from "../../api/adminUserCreditApi";
+import collaborationApi from "../../api/collaborationApi";
 
 const AdminNavbar = ({ toggleSidebar }) => {
   const [unseenRequests, setUnseenRequests] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [collaborations, setCollaborations] = useState([]);
 
   const toggleFullScreen = () => {
     if (document.fullscreenEnabled) {
@@ -19,15 +21,14 @@ const AdminNavbar = ({ toggleSidebar }) => {
     }
   };
 
-  useEffect(() => {
-    fetchUnseenRequests(); // Initial fetch
-
-    const interval = setInterval(() => {
-      fetchUnseenRequests();
-    }, 15000); // 15 seconds
-
-    return () => clearInterval(interval); // Cleanup on unmount
-  }, []);
+  const fetchCollaborations = async () => {
+    try {
+      const response = await collaborationApi.getCollabsNotSeen();
+      setCollaborations(response.data);
+    } catch (error) {
+      console.error("Error fetching collaborations:", error);
+    }
+  };
 
   const fetchUnseenRequests = async () => {
     try {
@@ -41,14 +42,23 @@ const AdminNavbar = ({ toggleSidebar }) => {
     }
   };
 
+  // Fetch both unseen requests and collaborations on load, then every 15 seconds
   useEffect(() => {
     fetchUnseenRequests();
+    fetchCollaborations();
+
+    const interval = setInterval(() => {
+      fetchUnseenRequests();
+      fetchCollaborations();
+    }, 15000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const handleBellClick = () => {
     setShowDropdown(!showDropdown);
     if (!showDropdown) {
-      fetchUnseenRequests(); // Refresh when opening dropdown
+      fetchUnseenRequests(); 
     }
   };
 
@@ -61,7 +71,15 @@ const AdminNavbar = ({ toggleSidebar }) => {
     }
   };
 
-  console.log(unseenRequests);
+  const handleCollabMarkAsSeen = async (id) => {
+    try {
+      await collaborationApi.markAsSeen(id);
+      setUnseenRequests((prev) => prev.filter((req) => req.id !== id));
+    } catch (error) {
+      console.error("Failed to mark request as seen:", error);
+    }
+  };
+
 
   return (
     <div className="navbar navbar-expand-lg navbar-light shadow-sm px-3">
@@ -91,7 +109,7 @@ const AdminNavbar = ({ toggleSidebar }) => {
             className="i-Bell text-muted header-icon"
             onClick={handleBellClick}
           />
-          {unseenRequests.length == 0 && (
+          {(unseenRequests.length > 0 || collaborations.length > 0) && (
             <span
               className="badge bg-danger position-absolute top-0 start-100 translate-middle rounded-circle"
               style={{
@@ -103,22 +121,7 @@ const AdminNavbar = ({ toggleSidebar }) => {
                 justifyContent: "center",
               }}
             >
-              0
-            </span>
-          )}
-          {unseenRequests.length > 0 && (
-            <span
-              className="badge bg-danger position-absolute top-0 start-100 translate-middle rounded-circle"
-              style={{
-                width: "20px",
-                height: "20px",
-                fontSize: "0.75rem",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              {unseenRequests.length}
+              {unseenRequests.length + collaborations.length}
             </span>
           )}
 
@@ -138,64 +141,115 @@ const AdminNavbar = ({ toggleSidebar }) => {
                 <div className="text-center py-2">
                   <Spinner animation="border" size="sm" />
                 </div>
-              ) : unseenRequests.length === 0 ? (
-                <div className="dropdown-item text-muted">No new requests</div>
               ) : (
-                unseenRequests.map((req) => (
-                  <div
-                    key={req.id}
-                    className="dropdown-item d-flex flex-column align-items-start border-bottom pb-2 mb-2"
-                  >
-                    <div className="w-100 d-flex justify-content-between">
-                      <div>
-                        <strong>{req.userName}</strong>
-                        <div className="w-100 d-flex align-items-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline-success"
-                            className="p-1 d-flex align-items-center justify-content-center"
-                            style={{ width: "28px", height: "28px" }}
-                            onClick={() => handleMarkAsSeen(req.id)}
-                          >
-                            <FaCheckCircle size={12} />
-                          </Button>
+                <>
+                  {unseenRequests.length === 0 ? (
+                    <div className="dropdown-item text-muted">
+                      No new requests
+                    </div>
+                  ) : (
+                    unseenRequests.map((req) => (
+                      <div
+                        key={req.id}
+                        className="dropdown-item d-flex flex-column align-items-start border-bottom pb-2 mb-2"
+                      >
+                        <div className="w-100 d-flex justify-content-between">
+                          <div>
+                            <strong>{req.userName}</strong>
+                            <div className="w-100 d-flex align-items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline-success"
+                                className="p-1 d-flex align-items-center justify-content-center"
+                                style={{ width: "28px", height: "28px" }}
+                                onClick={() => handleMarkAsSeen(req.id)}
+                              >
+                                <FaCheckCircle size={12} />
+                              </Button>
 
-                          <div className="text-muted small">
-                            {req.companyName ? (
-                              <>
-                                <span>
-                                  <strong>{req.companyName}</strong> (company)
-                                </span>
-                                <br />
-                                Requested by: {req.userName} ({req.userEmail})
-                                <br />
-                                {req.requestCPUnit !== 0 ? (
+                              <div className="text-muted small">
+                                {req.companyName ? (
                                   <>
-                                    Credit Price Unit: <strong>{req.requestCPUnit}</strong> ₹
+                                    <span>
+                                      <strong>{req.companyName}</strong>{" "}
+                                      (company)
+                                    </span>
+                                    <br />
+                                    Requested by: {req.userName} (
+                                    {req.userEmail})
+                                    <br />
+                                    {req.requestCPUnit !== 0 ? (
+                                      <>
+                                        Credit Price Unit:{" "}
+                                        <strong>{req.requestCPUnit}</strong> ₹
+                                      </>
+                                    ) : (
+                                      <>
+                                        Credits:{" "}
+                                        <strong>{req.requestedCredits}</strong>
+                                      </>
+                                    )}
                                   </>
                                 ) : (
                                   <>
-                                    Credits: <strong>{req.requestedCredits}</strong>
+                                    {req.userEmail} – Requested:{" "}
+                                    <strong>
+                                      {req.requestCPUnit !== 0
+                                        ? req.requestCPUnit + " ₹"
+                                        : req.requestedCredits}
+                                    </strong>{" "}
+                                    {req.requestCPUnit === 0
+                                      ? "credits"
+                                      : "credit price unit"}
                                   </>
                                 )}
-                              </>
-                            ) : (
-                              <>
-                                {req.userEmail} – Requested:{" "}
-                                <strong>
-                                  {req.requestCPUnit !== 0
-                                    ? req.requestCPUnit + " ₹"
-                                    : req.requestedCredits}
-                                </strong>{" "}
-                                {req.requestCPUnit === 0 ? "credits" : "credit price unit"}
-                              </>
-                            )}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
+                    ))
+                  )}
+
+                  {collaborations.length === 0 ? (
+                    <div className="dropdown-item text-muted">
+                      No new collaborations
                     </div>
-                  </div>
-                ))
+                  ) : (
+                    collaborations.map((collab) => (
+                      <div
+                        key={collab.id}
+                        className="dropdown-item d-flex flex-column align-items-start border-bottom pb-2 mb-2"
+                      >
+                        <div className="w-100 d-flex justify-content-between">
+                          <div>
+                            <strong>{collab.collaborationName}</strong>
+
+                            <div className="w-100 d-flex align-items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline-success"
+                                className="p-1 d-flex align-items-center justify-content-center"
+                                style={{ width: "28px", height: "28px" }}
+                                onClick={() =>
+                                  handleCollabMarkAsSeen(collab.id)
+                                }
+                              >
+                                <FaCheckCircle size={12} />
+                              </Button>
+                              <div className="text-muted small">
+                                {collab.collaborationName} - ({collab.id}) want
+                                to update
+                                {collab.extraCharge} - for {collab.extraTime}{" "}
+                                days from {collab.createdBy}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </>
               )}
             </div>
           )}

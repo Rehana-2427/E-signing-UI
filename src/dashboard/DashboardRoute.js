@@ -9,7 +9,10 @@ import SignedDocument from "./SignedDocument";
 import DashboardLayout from "./layout/DashboardLayout";
 import AuditTrail from "./pages/AuditTrail";
 import Chat from "./pages/Chat";
+import CollabObject from "./pages/Collabs/CollabObject";
+import CollabOverview from "./pages/Collabs/CollabOverView";
 import MyCollabs from "./pages/Collabs/MyCollabs";
+import RecivedCollabs from "./pages/Collabs/RecivedCollabs";
 import MyCompanies from "./pages/Comapnies/MyCompanies";
 import Contacts from "./pages/Contacts";
 import Invitations from "./pages/Invitation/Invitations";
@@ -69,16 +72,20 @@ const DashboardRoute = () => {
         />
         <Route path="/invitations" element={<Invitations />} />
         <Route path="/review-documents" element={<ReviewerConsesnts />} />
-         <Route
-          path="/chat-app"
-          element={<ChatModal />}
-        />
+        <Route path="/chat-app" element={<ChatModal />} />
         <Route
           path="/review-documents/review-file"
           element={<FileReviewer />}
         />
         <Route path="/my-collabs" element={<MyCollabs />} />
-      </Route> 
+        <Route path="/my-collabs/create-collab" element={<CollabOverview />} />
+        <Route path="/my-collabs/collab-object" element={<CollabObject />} />
+
+        <Route
+          path="/my-collabs/recived-collabs"
+          element={<RecivedCollabs />}
+        />
+      </Route>
     </Routes>
   );
 };

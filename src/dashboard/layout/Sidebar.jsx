@@ -15,7 +15,6 @@ import { MdInsertInvitation } from "react-icons/md";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./Sidebar.css";
 
-
 const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -100,15 +99,15 @@ const Sidebar = () => {
       label: "Credit PassBook",
       icon: <FaBook size={30} />,
     },
-     {
+    {
       to: "/dashboard/my-collabs",
       label: "My-Collabs",
-      icon: <FaHandshake  size={30} />,
+      icon: <FaHandshake size={30} />,
     },
-      {
+    {
       to: "/dashboard/invitations?tab=unReviewed",
       label: "Invitations",
-      icon: <MdInsertInvitation   size={30} />,
+      icon: <MdInsertInvitation size={30} />,
     },
     { to: "/dashboard/profile", label: "Profile", icon: <FaUser size={30} /> },
   ];
@@ -134,7 +133,16 @@ const Sidebar = () => {
         currentPath.startsWith("/dashboard/creditRequest/")
       );
     }
-   if (linkPathname === "/dashboard/review-documents") {
+    if (linkPathname === "/dashboard/my-collabs") {
+      // Mark active if currentPath is exactly or starts with this path (including nested routes)
+      return (
+        currentPath === " /dashboard/my-collabs" ||
+        currentPath.startsWith("/dashboard/my-collabs") 
+      );
+    }
+
+   
+    if (linkPathname === "/dashboard/review-documents") {
       // Mark active if currentPath is exactly or starts with this path (including nested routes)
       return (
         currentPath === "/dashboard/review-documents" ||

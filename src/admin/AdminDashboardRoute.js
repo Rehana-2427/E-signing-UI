@@ -1,5 +1,6 @@
 import { Route, Routes } from "react-router-dom";
 import Admindashboard from "./Admindashboard";
+import Collaborations from "./Collaborations";
 import ComapnyUsers from "./ComapnyUsers";
 import CompanyCreditPassBook from "./CompanyCreditPassBook";
 import CompanyCreditsManagement from "./CompanyCreditsManagement";
@@ -35,7 +36,12 @@ const AdminDashboardRoute = () => {
           path="company-management/users-list"
           element={<ComapnyUsers />}
         />
+         <Route
+          path="collaborations"
+          element={<Collaborations />}
+        />
       </Route>
+      
     </Routes>
   );
 };

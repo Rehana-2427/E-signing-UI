@@ -47,7 +47,7 @@ const CompanyCreditsManagement = () => {
   };
 
   return (
-    <>
+    <div className="scrollable-container" style={{ height: "100%" }}>
       <h1>
         <strong>Company Credits Management</strong>
       </h1>
@@ -174,7 +174,7 @@ const CompanyCreditsManagement = () => {
           <Toast.Body className="text-white">{toastMessage}</Toast.Body>
         </Toast>
       </ToastContainer>
-    </>
+    </div>
   );
 };
 

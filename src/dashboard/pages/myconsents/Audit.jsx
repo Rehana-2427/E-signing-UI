@@ -1,27 +1,25 @@
 import { useEffect, useState } from "react";
-import { Alert, Button, Container, Spinner, Table } from "react-bootstrap";
-import { IoArrowBackCircleSharp } from "react-icons/io5";
-import { useLocation, useNavigate } from "react-router-dom";
-import documentApi from "../../api/documentapi";
+import { Alert, Container, Spinner, Table } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
+import documentApi from "../../../api/documentapi";
 
-const AuditTrail = () => {
+const Audit = ({ documentId, documentName }) => {
   const navigate = useNavigate();
   const [signers, setSigners] = useState([]);
-  const [documentName, setDocumentName] = useState("");
+  //   const [documentName, setDocumentName] = useState("");
   const [isCompleted, setIsCompleted] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const location = useLocation();
-  const queryParams = new URLSearchParams(location.search);
-  const documentId = queryParams.get("documentId");
+  //   const location = useLocation();
+  //   const queryParams = new URLSearchParams(location.search);
+  //   const documentId = queryParams.get("documentId");
 
   useEffect(() => {
     const fetchAuditTrail = async () => {
       try {
         const response = await documentApi.getSignerAudit(documentId);
-        const { signers, documentName } = response.data;
+        const { signers } = response.data;
 
-        setDocumentName(documentName);
         setSigners(signers);
 
         const allSigned = signers.every(
@@ -50,13 +48,11 @@ const AuditTrail = () => {
   return (
     <Container className="mt-4">
       <div class="header-container">
-        <h1>
-          <strong>Audit Trail</strong>
-        </h1>
-        <Button onClick={handleBack} variant="info" className="tooltip-btn">
+        <h3>Audit Trail</h3>
+        {/* <Button onClick={handleBack} variant="info" className="tooltip-btn">
           <IoArrowBackCircleSharp />
           <span className="tooltip-text">Go to Back</span>
-        </Button>
+        </Button> */}
       </div>
 
       {!isCompleted ? (
@@ -99,4 +95,4 @@ const AuditTrail = () => {
   );
 };
 
-export default AuditTrail;
+export default Audit;

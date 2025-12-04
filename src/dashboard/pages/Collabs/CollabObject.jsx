@@ -6,6 +6,7 @@ import CollabBrief from "./CollabBrief";
 import CollabCredits from "./CollabCredits";
 import CollabDocuments from "./CollabDocuments";
 import CollaborationChecklist from "./CollaborationChecklist";
+import CollabReport from "./CollabReport";
 import Contributors from "./Contributors";
 
 const CollabObject = () => {
@@ -34,7 +35,7 @@ const CollabObject = () => {
     const tab = new URLSearchParams(location.search).get("tab");
     if (tab && tab !== activeTab) setActiveTab(tab);
   }, [location.search]);
-  
+
   const handleBack = () => {
     navigate(-1);
   };
@@ -79,6 +80,12 @@ const CollabObject = () => {
         </Tabs.Tab>
         <Tabs.Tab eventKey="credits" title="Credits & Data">
           <CollabCredits
+            collabId={collabId}
+            collaborationName={collaborationName}
+          />
+        </Tabs.Tab>
+        <Tabs.Tab eventKey="audit" title="Audit Report">
+          <CollabReport
             collabId={collabId}
             collaborationName={collaborationName}
           />

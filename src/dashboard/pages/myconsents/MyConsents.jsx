@@ -1,15 +1,11 @@
 import { debounce } from "lodash";
 import { useEffect, useState } from "react";
 import { Button, OverlayTrigger, Table, Tooltip } from "react-bootstrap";
-import {
-  AiOutlineClockCircle,
-  AiOutlineDownload,
-  AiOutlineSend,
-} from "react-icons/ai";
+import { AiOutlineClockCircle, AiOutlineSend } from "react-icons/ai";
+import { CgDetailsMore } from "react-icons/cg";
 import { FaRegPaperPlane } from "react-icons/fa";
 import { HiDocumentReport } from "react-icons/hi";
-import { IoChatbubbles } from "react-icons/io5";
-import { MdEmail } from "react-icons/md";
+import { MdDelete } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import documentApi from "../../../api/documentapi";
@@ -76,16 +72,18 @@ const MyConsents = () => {
     setSearchTerm(searchQuery.trim()); // set searchTerm to trigger search
   };
   const handleChat = (documentId, documentName) => {
-    if (!documentId) {
-      Swal.fire("Error", "Document ID is missing.", "error");
-      return;
-    }
+    // if (!documentId) {
+    //   Swal.fire("Error", "Document ID is missing.", "error");
+    //   return;
+    // }
 
-    navigate("/dashboard/chat-app", {
-      state: { documentId, documentName,chatType: "document" },
-    });
+    //   navigate("/dashboard/chat-app", {
+    //     state: { documentId, documentName,chatType: "document" },
+    //   });
+    // };
+
+    alert("Under development");
   };
-
   const handleSendToSigners = async (documentId) => {
     try {
       const response = await documentApi.sendToSigners(documentId);
@@ -108,6 +106,12 @@ const MyConsents = () => {
     }
   };
 
+  const handleTask = (documentId,documentName) => {
+    navigate(
+      `/dashboard/my-consents/consent-object?documentId=${documentId}&documentName=${documentName}&tab=brief`
+    );
+  };
+
   return (
     <>
       <div
@@ -119,7 +123,7 @@ const MyConsents = () => {
       >
         <div style={{ width: "250px" }}>
           <SearchBar
-            placeholder="Search drafts..."
+            placeholder="Search consents..."
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
             onSearch={handleSearch} // pass handler here
@@ -132,13 +136,15 @@ const MyConsents = () => {
           <tr>
             <th>#id</th>
             <th>Document Name</th>
-            <th># of Reviewers count</th>
+
             <th>Sent On</th>
+            <th># of Reviewers count</th>
             <th># of signers count</th>
-            <th>Actions</th>
+            {/* <th>Actions</th> */}
             <th>Reviewer Status</th>
             <th>Document Status</th>
-            <th>Chat</th>
+            {/* <th>Chat</th> */}
+            <th>Actions</th>
             <th>Audit Trail</th>
           </tr>
         </thead>
@@ -160,22 +166,16 @@ const MyConsents = () => {
               <tr key={consent.documentId}>
                 <td>{consent.documentId}</td>
                 <td>{consent.documentName}</td>
+                <td>{consent.sentOn}</td>
                 <td>
                   {consent.reviwercount} / {consent.totalReviwers}
                 </td>
-                <td>{consent.sentOn}</td>
+
                 <td>
                   {consent.signedCount} / {consent.totalSigners}
                 </td>
-                <td>
-                  {/* <Button
-                    variant="primary"
-                    size="sm"
-                    className="me-2"
-                    title="View"
-                  >
-                    <AiFillEye />
-                  </Button> */}
+                {/* <td>
+                
                   <Button
                     variant="success"
                     size="sm"
@@ -192,7 +192,7 @@ const MyConsents = () => {
                   >
                     <MdEmail />
                   </Button>
-                </td>
+                </td> */}
                 <td>{consent.reviewerStatus}</td>
 
                 <td>
@@ -276,7 +276,7 @@ const MyConsents = () => {
                   )}
                 </td>
 
-                <td>
+                {/* <td>
                   <Button
                     variant="secondary"
                     onClick={() =>
@@ -286,9 +286,34 @@ const MyConsents = () => {
                   >
                     <IoChatbubbles />
                   </Button>
+                </td> */}
+
+                <td>
+                  <OverlayTrigger
+                    placement="top"
+                    overlay={<Tooltip id="tooltip-task">My Consent</Tooltip>}
+                  >
+                    <Button
+                      variant="info"
+                      onClick={() => handleTask(consent.documentId,consent.documentName)}
+                    >
+                      <CgDetailsMore />
+                    </Button>
+                  </OverlayTrigger>
+                  <OverlayTrigger
+                    placement="top"
+                    overlay={
+                      <Tooltip id="tooltip-delete">Delete Consent</Tooltip>
+                    }
+                  >
+                    <Button variant="danger" className="ms-2">
+                      <MdDelete />
+                    </Button>
+                  </OverlayTrigger>
                 </td>
                 <td>
                   <Button
+                    variant="dark"
                     onClick={() =>
                       navigate(
                         `/dashboard/my-consents/audit-trail?documentId=${consent.documentId}`

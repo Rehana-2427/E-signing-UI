@@ -75,5 +75,9 @@ const collaborationApi = {
       params: { collaboration_id },
     });
   },
+
+  getCollabReport: (collabId) => {
+    return apiClient.get(`/report/${collabId}`);
+  },
 };
 export default collaborationApi;

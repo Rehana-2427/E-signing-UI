@@ -230,14 +230,14 @@ const CollabOverview = () => {
   return (
     <div className="scrollable-container" style={{ height: "100%" }}>
       <div className="header-container">
-        <h1>Collaboration Overview</h1>
+        <h1><strong>Add New Collaboration</strong></h1>
         <Button onClick={handleBack} variant="info" className="tooltip-btn">
           <IoArrowBackCircleSharp />
           <span className="tooltip-text">Go to Back</span>
         </Button>
       </div>
 
-      <Card className="p-4 mt-3 shadow-sm">
+      <Card className="p-4 shadow-sm">
         <h5 className="mb-3">🗂️ Collaboration Overview</h5>
         <p>
           <strong>Total Collaboration charge: {collabCharge}</strong>{" "}

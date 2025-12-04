@@ -12,16 +12,26 @@ const NotApprovedCollabs = () => {
     const fetchCollaborations = async () => {
       try {
         const response = await collaborationApi.getCollabNotApproved();
-        setCollaborations(response.data);
+
+        // Make sure it's an array
+        const data = Array.isArray(response.data) ? response.data : [];
+        setCollaborations(data);
       } catch (error) {
         console.error("Error fetching collaborations:", error);
+        setCollaborations([]); // fallback
       }
     };
 
     fetchCollaborations();
   }, []);
 
-  const handleApprove = async (collabId, collaborationName, extraCharge, extraTime, deadline) => {
+  const handleApprove = async (
+    collabId,
+    collaborationName,
+    extraCharge,
+    extraTime,
+    deadline
+  ) => {
     try {
       const response = await collaborationApi.updateApproval(collabId);
       if (response.data) {
@@ -34,10 +44,10 @@ const NotApprovedCollabs = () => {
 
         // Trigger SweetAlert after success
         Swal.fire({
-          icon: 'success',
-          title: 'Approval Successful',
+          icon: "success",
+          title: "Approval Successful",
           text: `Approval successful for Collaboration: ${collaborationName} -  ${collabId})\nCredits: ${extraCharge} for ${extraTime} days\nNew Deadline: ${deadline}`,
-          confirmButtonText: 'OK',
+          confirmButtonText: "OK",
         });
       }
     } catch (error) {
@@ -95,7 +105,18 @@ const NotApprovedCollabs = () => {
                       </Tooltip>
                     }
                   >
-                    <Button variant="secondary" onClick={() => handleApprove(collab.id, collab.collaborationName, collab.extraCharge, collab.extraTime, collab.deadline)}>
+                    <Button
+                      variant="secondary"
+                      onClick={() =>
+                        handleApprove(
+                          collab.id,
+                          collab.collaborationName,
+                          collab.extraCharge,
+                          collab.extraTime,
+                          collab.deadline
+                        )
+                      }
+                    >
                       <FcApprove />
                     </Button>
                   </OverlayTrigger>

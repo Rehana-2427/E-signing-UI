@@ -1,10 +1,13 @@
 // Consents.js
 import { useEffect, useState } from "react";
-import { Tab, Tabs } from "react-bootstrap";
+import { Button, Tab, Tabs } from "react-bootstrap";
+import { FaPlusCircle } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 import Drafts from "./Drafts";
 import MyConsents from "./MyConsents";
 
 const Consents = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("sent");
   useEffect(() => {
     const storedTab = localStorage.getItem("consentsActiveTab");
@@ -20,9 +23,15 @@ const Consents = () => {
         height: "100%",
       }}
     >
-      <h1>
-        <strong>My Consents & Agreements</strong>
-      </h1>
+      <div className="d-flex align-items-center justify-content-between mb-3">
+        <h1>
+          <strong>My Consents & Agreements</strong>
+        </h1>
+        <Button variant="info" className="tooltip-btn" onClick={() => navigate(`/dashboard/my-consents/new-consent/step/1`)}>
+          Add New Consent <FaPlusCircle />
+        </Button>
+      </div>
+
       <Tabs
         activeKey={activeTab}
         onSelect={(key) => setActiveTab(key)}
@@ -35,7 +44,7 @@ const Consents = () => {
         <Tab eventKey="drafts" title="Drafts">
           <Drafts />
         </Tab>
-          {/* <Tab eventKey="pending" title="pending">
+        {/* <Tab eventKey="pending" title="pending">
           <PendingConsents />
         </Tab> */}
       </Tabs>

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Button, OverlayTrigger, Table, Tooltip } from "react-bootstrap";
 import { CgGoogleTasks } from "react-icons/cg";
+import { FaPlusCircle } from "react-icons/fa";
+import { HiDocumentReport } from "react-icons/hi";
 import { MdDelete } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import collaborationApi from "../../../api/collaborationApi";
@@ -60,9 +62,25 @@ const UserCollabs = () => {
   }
 
   return (
-    <>
-      <br />
-      {/* <p>After saving all details you can see contributors list</p> */}
+    <div
+      className="scrollable-container"
+      style={{
+        height: "100%",
+      }}
+    >
+      <div className="d-flex align-items-center justify-content-between mb-3">
+        <h1>
+          <strong>My-Collabs</strong>
+        </h1>
+        <Button
+          onClick={() => navigate(`/dashboard/my-collabs/new-collab`)}
+          variant="info"
+          className="tooltip-btn"
+        >
+          Add New Collaboration <FaPlusCircle />
+        </Button>
+      </div>
+
       {selectedCollab ? (
         <>
           <div className="d-flex justify-content-end align-items-end mt-2">
@@ -70,10 +88,6 @@ const UserCollabs = () => {
               Back to Collaboration List
             </Button>
           </div>
-          {/* <Contributors
-            collabId={selectedCollab.collabId}
-            collaborationName={selectedCollab.collaborationName}
-          /> */}
         </>
       ) : (
         <>
@@ -94,6 +108,7 @@ const UserCollabs = () => {
                   <th>Charged To</th>
                   <th>Status</th>
                   <th>Action</th>
+                  <th>Audit</th>
                 </tr>
               </thead>
               <tbody>
@@ -148,6 +163,22 @@ const UserCollabs = () => {
                         </Button>
                       </OverlayTrigger>
                     </td>
+                    <td>
+                      <Button
+                        variant="dark"
+                        onClick={() =>
+                          navigate(
+                            `/dashboard/my-collabs/collab-object?collabId=${
+                              collab.collabId
+                            }&collaborationName=${encodeURIComponent(
+                              collab.collaborationName
+                            )}&tab=audit`
+                          )
+                        }
+                      >
+                        <HiDocumentReport />
+                      </Button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -155,7 +186,7 @@ const UserCollabs = () => {
           )}
         </>
       )}
-    </>
+    </div>
   );
 };
 

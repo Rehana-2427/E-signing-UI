@@ -4,11 +4,11 @@ import { AiOutlinePlus, AiOutlineSend } from "react-icons/ai";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import { useLocation } from "react-router-dom";
 import chatApi from "../../../api/chatApi";
-import collaborationApi from "../../../api/collaborationApi";
+import signerApi from "../../../api/signerapi";
 
-const ChatModal = () => {
+const SignersChat = () => {
   const location = useLocation();
-  const { collabId, collaborationName, contributors, chatType } =
+  const { documentId, documentName } =
     location.state || {};
   const user = JSON.parse(localStorage.getItem("user"));
   const [isGroupChat, setIsGroupChat] = useState(true);
@@ -17,27 +17,48 @@ const ChatModal = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const fileInputRef = useRef(null);
   const messagesEndRef = useRef(null);
-  const [createdBy, setCreatedBy] = useState("");
-  const [selectedContributor, setSelectedContributor] = useState(null);
+  const [selectedSigner, setSelectedSigner] = useState(null);
   const [selectedCreator, setSelectedCreator] = useState(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [editingMessage, setEditingMessage] = useState(null);
   const [editedMessages, setEditedMessages] = useState({});
+  const [signers, setSigners] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [senderEmailFromSender, setSenderEmailFromSender] = useState();
+  const chatType = "document";
+  console.log(documentId, documentName, chatType);
 
   useEffect(() => {
-    const fetchCreatorBycollabId = async () => {
-      try {
-        const response = await collaborationApi.getCreatedByEmail(collabId);
-        setCreatedBy(response.data);
-      } catch (error) {
-        console.error("Failed to fetch creator:", error);
-      }
-    };
+    if (documentId) {
+      signerApi
+        .getDetailsOfSignersById(documentId)
+        .then((response) => {
+          console.log("Signers data:", response.data);
+          setSigners(response.data);
 
-    if (collabId) {
-      fetchCreatorBycollabId();
+          // Extract senderEmail from the first signer
+          if (
+            response.data &&
+            response.data.length > 0 &&
+            response.data[0].senderEmail
+          ) {
+            setSenderEmailFromSender(response.data[0].senderEmail);
+          } else {
+            console.error("senderEmail not found in signers");
+          }
+
+          setLoading(false);
+        })
+        .catch((err) => {
+          setError("Failed to fetch reviewer details.");
+          console.error("Error fetching reviewers:", err);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
     }
-  }, [collabId]);
+  }, [documentId]);
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -49,24 +70,25 @@ const ChatModal = () => {
         const chatMode = isGroupChat ? "group" : "individual";
 
         if (isGroupChat) {
-          response = await chatApi.getMessagesByCollab({
-            userEmail: user?.userEmail || selectedContributor?.email,
-            collabId,
+          response = await chatApi.getchatByDocumentSigner({
+            userEmail: user?.userEmail || selectedSigner?.email,
+            documentId,
             chatMode,
+            role: "signer",
           });
         } else {
           const recipientEmail =
-            selectedContributor?.email || selectedCreator?.email;
+            selectedSigner?.email || selectedCreator?.email;
           if (!recipientEmail) {
-            // If no recipient is selected, do not fetch messages
             setMessages([]);
             return;
           }
-          response = await chatApi.getIndiviudalChat({
-            collabId,
+          response = await chatApi.getIndiviudalChatSigner({
+            documentId,
             chatMode,
             userEmail: user?.userEmail,
             reciver: recipientEmail,
+            role: "signer",
           });
         }
 
@@ -95,13 +117,122 @@ const ChatModal = () => {
     };
 
     fetchMessages();
-  }, [user, collabId, isGroupChat, selectedContributor, selectedCreator]);
+  }, [user, documentId, isGroupChat, selectedSigner, selectedCreator]);
 
+  useEffect(() => {
+    if (isAtBottom && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, isAtBottom]);
+
+  const handleScroll = () => {
+    const chatContainer = messagesEndRef.current?.parentElement;
+    if (chatContainer) {
+      const isAtBottom =
+        chatContainer.scrollHeight - chatContainer.scrollTop ===
+        chatContainer.clientHeight;
+      setIsAtBottom(isAtBottom);
+    }
+  };
+
+  useEffect(() => {
+    const chatContainer = messagesEndRef.current?.parentElement;
+    if (chatContainer) {
+      chatContainer.addEventListener("scroll", handleScroll);
+    }
+
+    return () => {
+      if (messagesEndRef.current?.parentElement) {
+        messagesEndRef.current?.parentElement.removeEventListener(
+          "scroll",
+          handleScroll
+        );
+      }
+    };
+  }, []);
   const formatEmailToName = (email) => {
     const emailPart = email.split("@")[0]; // Get the part before '@'
     return emailPart.replace(/\d+/g, ""); // Remove digits from the email part
   };
+  //   console.log(senderEmailFromSender)
 
+  const formatMessageDate = (timestamp) => {
+    const messageDate = new Date(timestamp);
+    const today = new Date();
+
+    // Zero out time to compare only date
+    const todayZero = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    );
+    const messageZero = new Date(
+      messageDate.getFullYear(),
+      messageDate.getMonth(),
+      messageDate.getDate()
+    );
+
+    const diffTime = todayZero - messageZero; // difference in milliseconds
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return "Today";
+    if (diffDays === 1) return "Yesterday";
+    return messageDate.toLocaleDateString(); // fallback to locale date
+  };
+
+  const groupedMessages = () => {
+    const grouped = [];
+    let currentDateLabel = null;
+
+    messages.forEach((msg) => {
+      const messageDateLabel = formatMessageDate(msg.timestamp);
+
+      if (messageDateLabel !== currentDateLabel) {
+        currentDateLabel = messageDateLabel;
+        grouped.push({ date: currentDateLabel, messages: [] });
+      }
+      grouped[grouped.length - 1].messages.push(msg);
+    });
+
+    return grouped;
+  };
+
+  const handleEdit = (msg) => {
+    console.log("clicked");
+    console.log(msg);
+    setEditingMessage(msg);
+    setNewMessage(msg.content);
+  };
+
+  const handleDelete = async (id) => {
+    console.log("message deleted ", id);
+    try {
+      await chatApi.deleteMsg(id);
+
+      setMessages((prevMessages) =>
+        prevMessages.filter((msg) => msg.id !== id)
+      );
+
+      setEditedMessages((prev) => {
+        const newEdited = { ...prev };
+        delete newEdited[id];
+        return newEdited;
+      });
+    } catch (error) {
+      console.error("Failed to delete message:", error);
+    }
+  };
+  const handleFileButtonClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedFile(file);
+    }
+  };
   const handleSendMessage = async () => {
     if (!newMessage.trim() && !selectedFile) return;
 
@@ -110,20 +241,20 @@ const ChatModal = () => {
     let recipients = [];
     if (isGroupChat) {
       // Include all contributors except sender
-      recipients = contributors
+      recipients = signers
         .filter((c) => c.email !== senderEmail)
         .map((c) => c.email);
 
       // Include the creator if not the sender
       if (
-        createdBy &&
-        createdBy !== senderEmail &&
-        !recipients.includes(createdBy)
+        senderEmailFromSender &&
+        senderEmailFromSender !== senderEmail &&
+        !recipients.includes(senderEmailFromSender)
       ) {
-        recipients.push(createdBy);
+        recipients.push(senderEmailFromSender);
       }
     } else {
-      if (selectedContributor) recipients = [selectedContributor.email];
+      if (selectedSigner) recipients = [selectedSigner.email];
       else if (selectedCreator) recipients = [selectedCreator.email];
       else return;
     }
@@ -160,13 +291,12 @@ const ChatModal = () => {
         timestamp: new Date().toISOString(),
         fileUrl: selectedFile ? URL.createObjectURL(selectedFile) : null,
         recipients,
-        chatType: chatType || "collaboration",
+        chatType: chatType || "document",
         chatMode: isGroupChat ? "group" : "individual",
-        collabId,
-        collabrationName: collaborationName,
-        collaborationDetails: !isGroupChat
-          ? selectedContributor || selectedCreator
-          : null,
+        documentId: documentId,
+        documentName: documentName,
+        role: "signer",
+        signerDetails: !isGroupChat ? selectedSigner || selectedCreator : null,
       };
 
       setMessages((prev) => [...prev, messageData]);
@@ -182,145 +312,30 @@ const ChatModal = () => {
     setSelectedFile(null);
   };
 
-  const formatMessageDate = (timestamp) => {
-    const messageDate = new Date(timestamp);
-    const today = new Date();
-
-    // Zero out time to compare only date
-    const todayZero = new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      today.getDate()
-    );
-    const messageZero = new Date(
-      messageDate.getFullYear(),
-      messageDate.getMonth(),
-      messageDate.getDate()
-    );
-
-    const diffTime = todayZero - messageZero; // difference in milliseconds
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) return "Today";
-    if (diffDays === 1) return "Yesterday";
-    return messageDate.toLocaleDateString(); // fallback to locale date
-  };
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setSelectedFile(file);
-    }
-  };
-
-  const groupedMessages = () => {
-    const grouped = [];
-    let currentDateLabel = null;
-
-    messages.forEach((msg) => {
-      const messageDateLabel = formatMessageDate(msg.timestamp);
-
-      if (messageDateLabel !== currentDateLabel) {
-        currentDateLabel = messageDateLabel;
-        grouped.push({ date: currentDateLabel, messages: [] });
-      }
-      grouped[grouped.length - 1].messages.push(msg);
-    });
-
-    return grouped;
-  };
-  const handleFileButtonClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
-
-  const handleContributorSelect = ({ name, email, role }) => {
-    if (selectedContributor?.email === email) {
-      setSelectedContributor(null);
-    } else {
-      setSelectedContributor({ name, email, role });
-      setSelectedCreator(null);
-    }
-  };
-
-  const handleCreatorSelect = (creatorEmail) => {
-    if (selectedCreator?.email === creatorEmail) {
-      setSelectedCreator(null);
-    } else {
-      setSelectedCreator({ email: creatorEmail });
-      setSelectedContributor(null);
-    }
-  };
-
   const handleGroupChatToggle = () => {
     if (!isGroupChat) {
       setMessages([]);
     }
     setIsGroupChat((prev) => !prev);
-    setSelectedContributor(null);
+    setSelectedSigner(null);
     setSelectedCreator(null);
   };
-
-  useEffect(() => {
-    // Scroll to the bottom if the user is at the bottom
-    if (isAtBottom && messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages, isAtBottom]);
-
-  const handleScroll = () => {
-    const chatContainer = messagesEndRef.current?.parentElement;
-    if (chatContainer) {
-      const isAtBottom =
-        chatContainer.scrollHeight - chatContainer.scrollTop ===
-        chatContainer.clientHeight;
-      setIsAtBottom(isAtBottom);
+  const handleSignerSelect = ({ name, email, role }) => {
+    if (selectedSigner?.email === email) {
+      setSelectedSigner(null);
+    } else {
+      setSelectedSigner({ name, email, role });
+      setSelectedCreator(null);
     }
   };
-
-  useEffect(() => {
-    const chatContainer = messagesEndRef.current?.parentElement;
-    if (chatContainer) {
-      chatContainer.addEventListener("scroll", handleScroll);
-    }
-
-    return () => {
-      if (messagesEndRef.current?.parentElement) {
-        messagesEndRef.current?.parentElement.removeEventListener(
-          "scroll",
-          handleScroll
-        );
-      }
-    };
-  }, []);
-
-  const handleEdit = (msg) => {
-    console.log("clicked");
-    console.log(msg);
-    setEditingMessage(msg);
-    setNewMessage(msg.content);
-  };
-
-  const handleDelete = async (id) => {
-    console.log("message deleted ", id);
-    try {
-      await chatApi.deleteMsg(id);
-
-      setMessages((prevMessages) =>
-        prevMessages.filter((msg) => msg.id !== id)
-      );
-
-      setEditedMessages((prev) => {
-        const newEdited = { ...prev };
-        delete newEdited[id];
-        return newEdited;
-      });
-    } catch (error) {
-      console.error("Failed to delete message:", error);
+  const handleCreatorSelect = (creatorEmail) => {
+    if (selectedCreator?.email === creatorEmail) {
+      setSelectedCreator(null);
+    } else {
+      setSelectedCreator({ email: creatorEmail });
+      setSelectedSigner(null);
     }
   };
-
   return (
     <div
       style={{
@@ -334,18 +349,17 @@ const ChatModal = () => {
         <div style={{ padding: "1rem", borderBottom: "1px solid #ddd" }}>
           <h5>
             {isGroupChat
-              ? `${collaborationName} - Group Chat`
-              : selectedContributor
-              ? `${collaborationName} - ${
-                  selectedContributor.email === user?.userEmail
+              ? `${documentName} - Group Chat`
+              : selectedSigner
+              ? `${documentName} - ${
+                  selectedSigner.email === user?.userEmail
                     ? "You"
-                    : selectedContributor.name ||
-                      formatEmailToName(selectedContributor.email)
+                    : selectedSigner.name ||
+                      formatEmailToName(selectedSigner.email)
                 }`
-              : `${collaborationName}`}
+              : `${documentName}`}
           </h5>
         </div>
-
         <div
           style={{
             flex: 1,
@@ -356,7 +370,7 @@ const ChatModal = () => {
         >
           {isGroupChat && groupedMessages().length === 0 ? (
             <div>No messages available for this group chat</div>
-          ) : !isGroupChat && !selectedContributor && !selectedCreator ? (
+          ) : !isGroupChat && !selectedSigner && !selectedCreator ? (
             <div>Please select a person to whom you want to chat.</div>
           ) : (
             groupedMessages().map((group, idx) => (
@@ -474,6 +488,7 @@ const ChatModal = () => {
               </div>
             ))
           )}
+
           <div ref={messagesEndRef} />
         </div>
         <div
@@ -514,7 +529,6 @@ const ChatModal = () => {
             onChange={(e) => setNewMessage(e.target.value)} // Update newMessage state
             onKeyDown={(e) => e.key === "Enter" && handleSendMessage()} // Send on Enter
           />
-
           <button
             onClick={handleSendMessage}
             style={{
@@ -531,7 +545,6 @@ const ChatModal = () => {
           </button>
         </div>
       </div>
-
       <div
         style={{
           width: "250px",
@@ -545,12 +558,10 @@ const ChatModal = () => {
             {isGroupChat ? "Switch to Individual Chat" : "Switch to Group Chat"}
           </Button>
         </div>
-        <h4 className="mt-4">
-          {isGroupChat ? "Group Members" : "Contributor"}
-        </h4>
+        <h4 className="mt-4">{isGroupChat ? "Group Members" : "Signers"}</h4>
         {isGroupChat ? (
           <>
-            {createdBy && (
+            {senderEmailFromSender && (
               <div
                 style={{
                   marginBottom: "1rem",
@@ -561,25 +572,27 @@ const ChatModal = () => {
               >
                 <div>
                   Created By:{" "}
-                  {createdBy === user?.userEmail ? "You" : createdBy}
+                  {senderEmailFromSender === user?.userEmail
+                    ? "You"
+                    : senderEmailFromSender}
                 </div>
                 <hr style={{ margin: "0.5rem 0", borderColor: "#ddd" }} />
               </div>
             )}
-            {contributors.map(({ name, email, role }, idx) => (
+            {signers.map(({ name, email }, idx) => (
               <div key={idx} style={{ marginBottom: "1rem" }}>
                 <div style={{ fontWeight: "bold" }}>
                   {email === user?.userEmail ? "You" : name}
                 </div>
                 <div>{email}</div>
-                <div>{role}</div>
+                <div>Signer</div>
                 <hr style={{ margin: "0.5rem 0", borderColor: "#ddd" }} />
               </div>
             ))}
           </>
         ) : (
           <>
-            {createdBy && (
+            {senderEmailFromSender && (
               <div
                 style={{
                   marginBottom: "1rem",
@@ -587,39 +600,39 @@ const ChatModal = () => {
                   borderRadius: "8px",
                   fontWeight: "bold",
                   backgroundColor:
-                    selectedCreator?.email === createdBy
+                    selectedCreator?.email === senderEmailFromSender
                       ? "#e1ffc7"
                       : "#f0f0f0",
                 }}
-                onClick={() => handleCreatorSelect(createdBy)}
+                onClick={() => handleCreatorSelect(senderEmailFromSender)}
               >
                 <div>
                   Created By:{" "}
-                  {createdBy === user?.userEmail ? "You" : createdBy}
+                  {senderEmailFromSender === user?.userEmail
+                    ? "You"
+                    : senderEmailFromSender}
                 </div>
                 <hr style={{ margin: "0.5rem 0", borderColor: "#ddd" }} />
               </div>
             )}
-            {contributors.map(({ name, email, role }, idx) => (
+            {signers.map(({ name, email, role }, idx) => (
               <div
                 key={idx}
                 style={{
                   marginBottom: "1rem",
                   cursor: "pointer",
                   backgroundColor:
-                    selectedContributor?.email === email
-                      ? "#e1ffc7"
-                      : "#f0f0f0",
+                    selectedSigner?.email === email ? "#e1ffc7" : "#f0f0f0",
                   padding: "0.5rem",
                   borderRadius: "8px",
                 }}
-                onClick={() => handleContributorSelect({ name, email, role })}
+                onClick={() => handleSignerSelect({ name, email, role })}
               >
                 <div style={{ fontWeight: "bold" }}>
                   {email === user?.userEmail ? "You" : name}
                 </div>
                 <div>{email}</div>
-                <div>{role}</div>
+                <div>Signer</div>
                 <hr style={{ margin: "0.5rem 0", borderColor: "#ddd" }} />
               </div>
             ))}
@@ -630,4 +643,4 @@ const ChatModal = () => {
   );
 };
 
-export default ChatModal;
+export default SignersChat;

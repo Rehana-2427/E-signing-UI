@@ -165,7 +165,7 @@ const DocumentDetails = ({ onNext, formData, setFormData, userCredit }) => {
 
   return (
     <>
-      <div className="mb-4">
+      <div>
         <Row>
           <Col md={6}>
             <h3>

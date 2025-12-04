@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Table } from "react-bootstrap";
+import { Button, Table } from "react-bootstrap";
+import { IoChatbubbles } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import reviewerApi from "../../../api/reviewerApi";
 
@@ -18,9 +19,7 @@ const ReviewdConsents = () => {
       setError(null);
 
       try {
-        const response = await reviewerApi.getRevieweDocsByEmail(
-          reviewerEmail
-        );
+        const response = await reviewerApi.getRevieweDocsByEmail(reviewerEmail);
         setReviewedDocs(Array.isArray(response.data) ? response.data : []);
       } catch (err) {
         setError("Failed to fetch unreviewed documents");
@@ -53,7 +52,15 @@ const ReviewdConsents = () => {
   //     setError("Failed to fetch document content");
   //   }
   // };
-
+  const handleChatHubClick = (documentId, documentName) => {
+    navigate("/dashboard/chat-app-reviewers", {
+      state: {
+        documentId,
+        documentName,
+        chatType: "document",
+      },
+    });
+  };
   return (
     <div>
       <h2>Reviewed Documents</h2>
@@ -65,6 +72,7 @@ const ReviewdConsents = () => {
             <th>Sender</th>
             <th>Approved at</th>
             {/* <th>Actions</th> */}
+            <th>Chat</th>
           </tr>
         </thead>
         <tbody>
@@ -75,6 +83,17 @@ const ReviewdConsents = () => {
                 <td>{doc.companyName || "N/A"}</td>
                 <td>{doc.senderEmail}</td>
                 <td>{doc.approvedAt}</td>
+                <td>
+                  <Button
+                    variant="secondary"
+                    onClick={() =>
+                      handleChatHubClick(doc.documentId, doc.documentName)
+                    }
+                    title="Chat"
+                  >
+                    <IoChatbubbles />
+                  </Button>
+                </td>
                 {/* <td>
                   <Button
                     variant="primary"

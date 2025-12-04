@@ -7,7 +7,6 @@ import {
   FaFilePdf,
   FaFolderOpen,
   FaHandshake,
-  FaPlusCircle,
   FaTachometerAlt,
   FaUser,
 } from "react-icons/fa";
@@ -63,30 +62,36 @@ const Sidebar = () => {
       label: "Dashboard",
       icon: <FaTachometerAlt size={30} />,
     },
-    {
-      to: "/dashboard/new-consent/step/1",
-      label: "New Consent",
-      icon: <FaPlusCircle size={30} />,
-    },
+    // {
+    //   to: "/dashboard/new-consent/step/1",
+    //   label: "New Consent",
+    //   icon: <FaPlusCircle size={30} />,
+    // },
     {
       to: "/dashboard/my-consents",
       label: "My Consents & Agreements",
       icon: <FaFileAlt size={30} />,
     },
     {
-      to: "/dashboard/templates",
-      label: "Templates",
-      icon: <FaFilePdf size={30} />,
+      to: "/dashboard/my-collabs",
+      label: "My-Collabs",
+      icon: <FaHandshake size={30} />,
     },
+    {
+      to: "/dashboard/contacts",
+      label: "Contacts",
+      icon: <FaAddressBook size={30} />,
+    },
+
     {
       to: "/dashboard/my-docs",
       label: "My Docs",
       icon: <FaFolderOpen size={30} />,
     },
     {
-      to: "/dashboard/contacts",
-      label: "Contacts",
-      icon: <FaAddressBook size={30} />,
+      to: "/dashboard/templates",
+      label: "Templates",
+      icon: <FaFilePdf size={30} />,
     },
 
     {
@@ -99,11 +104,7 @@ const Sidebar = () => {
       label: "Credit PassBook",
       icon: <FaBook size={30} />,
     },
-    {
-      to: "/dashboard/my-collabs",
-      label: "My-Collabs",
-      icon: <FaHandshake size={30} />,
-    },
+
     {
       to: "/dashboard/invitations?tab=unReviewed",
       label: "Invitations",
@@ -137,11 +138,10 @@ const Sidebar = () => {
       // Mark active if currentPath is exactly or starts with this path (including nested routes)
       return (
         currentPath === " /dashboard/my-collabs" ||
-        currentPath.startsWith("/dashboard/my-collabs") 
+        currentPath.startsWith("/dashboard/my-collabs")
       );
     }
 
-   
     if (linkPathname === "/dashboard/review-documents") {
       // Mark active if currentPath is exactly or starts with this path (including nested routes)
       return (

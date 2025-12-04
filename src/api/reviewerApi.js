@@ -18,6 +18,9 @@ const reviewerApi = {
     apiClient.put("/approveDocument", null, {
       params: payload,
     }),
+
+  getDetailsOfReviewerById: (documentId) =>
+    apiClient.get("/getDetailsOfReviewerById", { params: { documentId } }),
 };
 
 export default reviewerApi;

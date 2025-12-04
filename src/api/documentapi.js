@@ -96,6 +96,9 @@ const documentApi = {
   getUnseenRequests: (senderEmail) =>
     apiClient.get(`/unseen-requests?senderEmail=${senderEmail}`),
   markAsSeen: (documentId) => apiClient.put(`/markAsSeen/${documentId}`),
-};
 
+  getDocumentDetail: (documentId) => {
+    return apiClient.get(`/${documentId}/summary`);
+  },
+};
 export default documentApi;

@@ -34,6 +34,33 @@ const chatApi = {
     return response;
   },
 
+  getchatByDocumentSigner: async ({ documentId, userEmail, chatMode,role }) => {
+    const response = apiClient.get(`/fetch-chatByDocumentSigner`, {
+      params: { documentId, userEmail, chatMode,role },
+    });
+    return response;
+  },
+
+  getIndiviudalChatSigner: async ({ documentId, chatMode, userEmail, reciver,role }) => {
+    const response = apiClient.get(`/fetchIndiviudalChatSigner`, {
+      params: { documentId, chatMode, userEmail, reciver,role },
+    });
+    return response;
+  },
+
+  getchatByDocumentReviewer: async ({ documentId, userEmail, chatMode,role }) => {
+    const response = apiClient.get(`/fetch-chatByDocumentReviewer`, {
+      params: { documentId, userEmail, chatMode,role },
+    });
+    return response;
+  },
+
+  getIndiviudalChatReviewer: async ({ documentId, chatMode, userEmail, reciver,role }) => {
+    const response = apiClient.get(`/fetchIndiviudalChatReviewer`, {
+      params: { documentId, chatMode, userEmail, reciver,role },
+    });
+    return response;
+  },
   getUnseenMessages: async ({ userEmail }) => {
     const response = apiClient.get(`/unread`, {
       params: { userEmail },

@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { Button } from "react-bootstrap";
+import { IoArrowBackCircleSharp } from "react-icons/io5";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import adminUserCreditApi from "../../api/adminUserCreditApi";
 import DocumentDetails from "./new_consent/DocumentDetails";
@@ -38,19 +40,26 @@ const NewConsent = () => {
 
   const handleNext = () => goToStep(currentStep + 1);
   const handlePrevious = () => goToStep(currentStep - 1);
-
+  const handleBack = () => {
+    navigate(-1);
+  };
   return (
     <div
-      className="scrollable-container" 
+      className="scrollable-container"
       style={{
-        height: "100%", 
+        height: "100%",
       }}
     >
-      <h1>
-        <strong>New Consent</strong>
-      </h1>
+      <div className="d-flex align-items-center justify-content-between mb-3">
+        <h1>
+          <strong>New Consent</strong>
+        </h1>
+        <Button onClick={handleBack} variant="info" className="tooltip-btn">
+          <IoArrowBackCircleSharp />
+          <span className="tooltip-text">Go to Back</span>
+        </Button>
+      </div>
       <p>Step {currentStep} of 3</p>
-
       {currentStep === 1 && (
         <DocumentDetails
           onNext={handleNext}
@@ -59,7 +68,6 @@ const NewConsent = () => {
           userCredit={userCredit}
         />
       )}
-
       {currentStep === 2 && (
         <SignatoriesSettings
           onNext={handleNext}
@@ -70,7 +78,6 @@ const NewConsent = () => {
           setSignatureFields={setSignatureFields}
         />
       )}
-
       {currentStep === 3 && (
         <PaymentSend
           onPrevious={handlePrevious}

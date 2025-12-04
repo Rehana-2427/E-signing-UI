@@ -4,18 +4,21 @@ import { Button, Table } from "react-bootstrap";
 import { FaEnvelope, FaEye } from "react-icons/fa";
 import { IoChatbubbles } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
-import Swal from "sweetalert2";
 import signerApi from "../../../api/signerapi";
 import SearchBar from "../SearchBar";
 
 const PendingDocs = () => {
   const [docs, setDocs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchTerm, setSearchTerm] = useState(""); // Track the last submitted search term
+  const [signers, setSigners] = useState([]);
+  const [senderEmailFromSender, setSenderEmailFromSender] = useState(null);
+  const [documentId, setDocumentId] = useState(null); // Selected document ID
+
   const user = JSON.parse(localStorage.getItem("user"));
   const userEmail = user?.userEmail;
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState(""); // track the last submitted search
 
   useEffect(() => {
     const fetchPendingDocs = async (query) => {
@@ -32,7 +35,7 @@ const PendingDocs = () => {
         }
         setDocs(response.data || []);
       } catch (error) {
-        console.error("Failed to fetch consents:", error);
+        console.error("Failed to fetch documents:", error);
         setDocs([]);
       } finally {
         setLoading(false);
@@ -40,24 +43,66 @@ const PendingDocs = () => {
     };
 
     const debouncedFetch = debounce(fetchPendingDocs, 300);
-
     debouncedFetch(searchQuery);
 
     return () => {
       debouncedFetch.cancel();
     };
-  }, [userEmail, searchTerm]);
+  }, [userEmail, searchTerm, searchQuery]);
+
+  // Fetch signers details when documentId is selected
+  useEffect(() => {
+    if (documentId) {
+      signerApi
+        .getDetailsOfSignersById(documentId)
+        .then((response) => {
+          console.log("Signers data:", response.data);
+          setSigners(response.data);
+
+          // Extract senderEmail from the first signer
+          if (
+            response.data &&
+            response.data.length > 0 &&
+            response.data[0].senderEmail
+          ) {
+            setSenderEmailFromSender(response.data[0].senderEmail);
+          } else {
+            console.error("senderEmail not found in signers");
+          }
+
+          setLoading(false);
+        })
+        .catch((err) => {
+          console.error("Error fetching reviewers:", err);
+          setLoading(false);
+        });
+    }
+  }, [documentId]); // Trigger whenever documentId changes
+
+  const handleSearch = () => {
+    setSearchTerm(searchQuery.trim()); // Set searchTerm to trigger search
+  };
+
+   const handleChatHubClick = (documentId,documentName) => {
+    navigate("/dashboard/chat-app-signers", {
+      state: {
+        documentId,
+        documentName,
+        chatType: "document",
+      },
+    });
+  };
 
   const handleView = (documentId, documentName, signedFile, fromTab) => {
     if (!documentId || !documentName || !userEmail) return;
     localStorage.setItem("docsActiveTab", fromTab);
     navigate("/dashboard/my-docs/view", {
       state: {
-        documentId: documentId,
-        documentName: documentName,
-        userEmail: userEmail,
-        signedFile: signedFile,
-        fromTab: fromTab,
+        documentId,
+        documentName,
+        userEmail,
+        signedFile,
+        fromTab,
       },
     });
   };
@@ -65,18 +110,18 @@ const PendingDocs = () => {
   const handleEmail = (signer) => {
     console.log("Emailing for", signer.email);
   };
+
   const handleDownload = (doc) => {
     const documentName = doc?.documentName || doc?.document?.documentName;
     const signedFile = doc?.signedFile;
     const originalFile = doc?.file || doc?.document?.file;
     const signStatus = doc?.signStatus;
 
-    // Determine which file to download based on sign status
     let base64File;
     if (signStatus === "completed" && signedFile) {
-      base64File = signedFile; // Use signed file if available
+      base64File = signedFile;
     } else if (originalFile) {
-      base64File = originalFile; // Use original file if signed file is not available
+      base64File = originalFile;
     } else {
       alert("No file available to download.");
       return;
@@ -86,9 +131,7 @@ const PendingDocs = () => {
     if (base64File instanceof Blob) {
       downloadBlob = base64File;
     } else if (typeof base64File === "string") {
-      // Check if the string is a valid base64 string
       if (base64File.startsWith("data:application/pdf;base64,")) {
-        // Remove the prefix if it exists
         base64File = base64File.split(",")[1];
       }
       try {
@@ -136,20 +179,9 @@ const PendingDocs = () => {
 
     URL.revokeObjectURL(url);
   };
-  const handleSearch = () => {
-    setSearchTerm(searchQuery.trim()); // set searchTerm to trigger search
-  };
-  const handleChat = (documentId, documentName) => {
-    if (!documentId) {
-      Swal.fire("Error", "Document ID is missing.", "error");
-      return;
-    }
 
-    navigate("/dashboard/chat-app", {
-      state: { documentId, documentName },
-    });
-  };
   if (loading) return <p>Loading pending Docs...</p>;
+
   return (
     <div>
       <div
@@ -171,6 +203,7 @@ const PendingDocs = () => {
       <Table hover>
         <thead>
           <tr>
+            <th>#Id</th>
             <th>Document Name</th>
             <th>Date Created</th>
             <th>Signed On</th>
@@ -196,6 +229,7 @@ const PendingDocs = () => {
 
               return (
                 <tr key={index}>
+                  <td>{doc.documentId}</td>
                   <td>{documentName || "N/A"}</td>
                   <td>{createdDate || "N/A"}</td>
                   <td>{signedAt || "Not signed yet"}</td>
@@ -203,9 +237,7 @@ const PendingDocs = () => {
                   <td>
                     <Button
                       variant="secondary"
-                      onClick={() =>
-                        handleChat(doc.documentId, doc.documentName)
-                      }
+                      onClick={() => handleChatHubClick(doc.documentId,documentName)}
                       title="Chat"
                     >
                       <IoChatbubbles />
@@ -238,16 +270,6 @@ const PendingDocs = () => {
                       >
                         <FaEnvelope />
                       </Button>
-                      {/* <Button
-                                                variant="success"
-                                                size="sm"
-                                                className="me-2"
-                                                onClick={() => handleDownload(doc)}
-                                                title={signStatus === "completed" ? "Download signed file" : "Download disabled until signed"}
-                                                disabled={signStatus !== "completed"}
-                                            >
-                                                <FaDownload />
-                                            </Button> */}
                     </div>
                   </td>
                 </tr>

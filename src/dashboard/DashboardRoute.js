@@ -11,19 +11,22 @@ import AuditTrail from "./pages/AuditTrail";
 import Chat from "./pages/Chat";
 import CollabObject from "./pages/Collabs/CollabObject";
 import CollabOverview from "./pages/Collabs/CollabOverView";
-import MyCollabs from "./pages/Collabs/MyCollabs";
 import RecivedCollabs from "./pages/Collabs/RecivedCollabs";
+import UserCollabs from "./pages/Collabs/UserCollabs";
 import MyCompanies from "./pages/Comapnies/MyCompanies";
 import Contacts from "./pages/Contacts";
 import Invitations from "./pages/Invitation/Invitations";
 import NewConsent from "./pages/NewConsent";
 import Profile from "./pages/Profile";
 import ChatModal from "./pages/chatComponent/ChatModal";
+import ReviewersChat from "./pages/chatComponent/ReviewersChat";
+import SignersChat from "./pages/chatComponent/SignersChat";
 import CompanyCreditReport from "./pages/credits/CompanyCreditReport";
 import CompanyCreditTransactionHistory from "./pages/credits/CompanyCreditTransactionHistory";
 import CreditRequest from "./pages/credits/CreditRequest";
 import UserCreditTransactionReport from "./pages/credits/UserCreditTransactionReport";
 import Dashboard from "./pages/dashboard_stats/Dashboard";
+import ConsenObject from "./pages/myconsents/ConsenObject";
 import Consents from "./pages/myconsents/Consents";
 import MyDocs from "./pages/mydocs/MyDocs";
 import RecipentViewDoc from "./pages/recipent_document/RecipentViewDoc";
@@ -45,7 +48,10 @@ const DashboardRoute = () => {
         <Route path="/sender-docs" element={<SenderDocs />} />
         <Route path="/pdf-viewer" element={<SignatureDocuments />} />
         <Route path="/my-consents" element={<Consents />} />
-        <Route path="/new-consent/step/:step" element={<NewConsent />} />
+        <Route
+          path="/my-consents/new-consent/step/:step"
+          element={<NewConsent />}
+        />
         <Route path="/my-consents/audit-trail" element={<AuditTrail />} />
         <Route path="/my-docs" element={<MyDocs />} />
         <Route path="/my-docs/view" element={<RecipentViewDoc />} />
@@ -77,14 +83,18 @@ const DashboardRoute = () => {
           path="/review-documents/review-file"
           element={<FileReviewer />}
         />
-        <Route path="/my-collabs" element={<MyCollabs />} />
+        <Route path="/my-collabs" element={<UserCollabs />} />
         <Route path="/my-collabs/create-collab" element={<CollabOverview />} />
         <Route path="/my-collabs/collab-object" element={<CollabObject />} />
-
         <Route
           path="/my-collabs/recived-collabs"
           element={<RecivedCollabs />}
         />
+        <Route path="/my-consents/consent-object" element={<ConsenObject />} />
+        <Route path="/my-collabs/new-collab" element={<CollabOverview />} />
+        <Route path="/chat-app-signers" element={<SignersChat />} />
+        <Route path="/chat-app-reviewers" element={<ReviewersChat />} />
+        {/* <Route path="/my-collabs/collab-report" element={<CollabReport />} /> */}
       </Route>
     </Routes>
   );

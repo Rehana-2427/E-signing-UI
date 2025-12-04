@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button, Table } from "react-bootstrap";
+import { IoChatbubbles } from "react-icons/io5";
 import { VscPreview } from "react-icons/vsc";
 import { useNavigate } from "react-router-dom";
 import reviewerApi from "../../../api/reviewerApi";
@@ -54,7 +55,15 @@ const UnreviewdConsesnts = () => {
       setError("Failed to fetch document content");
     }
   };
-
+  const handleChatHubClick = (documentId, documentName) => {
+    navigate("/dashboard/chat-app-reviewers", {
+      state: {
+        documentId,
+        documentName,
+        chatType: "document",
+      },
+    });
+  };
   return (
     <div>
       <h2>Unreviewed Documents</h2>
@@ -65,6 +74,7 @@ const UnreviewdConsesnts = () => {
             <th>Company Name</th>
             <th>Sender</th>
             <th>Actions</th>
+            <th>chat</th>
           </tr>
         </thead>
         <tbody>
@@ -88,6 +98,17 @@ const UnreviewdConsesnts = () => {
                     }
                   >
                     <VscPreview />
+                  </Button>
+                </td>
+                <td>
+                  <Button
+                    variant="secondary"
+                    onClick={() =>
+                      handleChatHubClick(doc.documentId, doc.documentName)
+                    }
+                    title="Chat"
+                  >
+                    <IoChatbubbles />
                   </Button>
                 </td>
               </tr>

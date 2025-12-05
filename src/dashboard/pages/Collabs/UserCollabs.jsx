@@ -103,9 +103,9 @@ const UserCollabs = () => {
                   <th>Created By</th>
                   <th>Company</th>
                   <th>Person</th>
-                  <th>Duration</th>
-                  <th>Max Charge</th>
-                  <th>Charged To</th>
+                  {/* <th>Duration</th> */}
+                  {/* <th>Max Charge</th>
+                  <th>Charged To</th> */}
                   <th>Status</th>
                   <th>Action</th>
                   <th>Audit</th>
@@ -123,9 +123,9 @@ const UserCollabs = () => {
                     </td>
                     <td>{collab.forCompany ? collab.companyName : "-"}</td>
                     <td>{collab.forPerson ? collab.personName : "-"}</td>
-                    <td>{collab.collaborationDuration}</td>
-                    <td>{collab.cost} credits</td>
-                    <td>{collab.costChargedTo}</td>
+                    {/* <td>{collab.collaborationDuration}</td> */}
+                    {/* <td>{collab.cost} credits</td>
+                    <td>{collab.costChargedTo}</td> */}
                     <td>
                       {collab.status ? (
                         <span style={{ color: "green" }}>Active</span>

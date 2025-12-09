@@ -29,7 +29,9 @@ const PaymentSend = ({ onPrevious, formData }) => {
   const [userCompanies, setUserCompanies] = useState([]);
   const [assignedCompanies, setAssignedCompanies] = useState([]);
   // const [creditSource, setCreditSource] = useState("user"); // "user" or "company"
-  const [selectedCompany, setSelectedCompany] = useState("");
+  const [selectedCompany, setSelectedCompany] = useState(
+    formData.companyName || ""
+  );
   const [companyCredits, setCompanyCredits] = useState(null);
   const [creditSource, setCreditSource] = useState(
     formData.creditSource || "user"
@@ -162,7 +164,8 @@ const PaymentSend = ({ onPrevious, formData }) => {
   const orignalCompanyBalance = companyCredits?.balanceCredit || 0;
   const originalCompanyUsed = companyCredits?.usedCredit || 0;
 
-  const predictedCompanyBalance = orignalCompanyBalance - companyCreditDeduction;
+  const predictedCompanyBalance =
+    orignalCompanyBalance - companyCreditDeduction;
   const predictedCompanyUsed = originalCompanyUsed + companyCreditDeduction;
   const paidCredits = companyCredits?.paidCredits || 0;
   const handleConfirmSend = async () => {
@@ -229,7 +232,7 @@ const PaymentSend = ({ onPrevious, formData }) => {
       reviewers: formData.reviewers.map((r) => ({
         reviewerEmail: r.email,
       })),
-      ...(creditSource === "company" && selectedCompany
+      ...(creditSource === "company"
         ? { companyName: selectedCompany }
         : {}),
     };
@@ -361,22 +364,26 @@ const PaymentSend = ({ onPrevious, formData }) => {
           </div>
         )}
 
-        {creditSource === "company" && mergedCompanies.length > 0 && (
-          <Form.Group controlId="selectCompany" className="mt-3">
-            <Form.Label>Select Company</Form.Label>
-            <Form.Select
-              value={selectedCompany}
-              onChange={(e) => setSelectedCompany(e.target.value)}
-            >
-              <option value="">-- Select Company --</option>
-              {mergedCompanies.map((company) => (
-                <option key={company.id} value={company.companyName}>
-                  {company.companyName}
-                </option>
-              ))}
-            </Form.Select>
-          </Form.Group>
-        )}
+        {creditSource ===
+          "company" && (
+            // <Form.Group controlId="selectCompany" className="mt-3">
+            //   <Form.Label>Select Company</Form.Label>
+            //   <Form.Select
+            //     value={selectedCompany}
+            //     onChange={(e) => setSelectedCompany(e.target.value)}
+            //   >
+            //     <option value="">-- Select Company --</option>
+            //     {mergedCompanies.map((company) => (
+            //       <option key={company.id} value={company.companyName}>
+            //         {company.companyName}
+            //       </option>
+            //     ))}
+            //   </Form.Select>
+            // </Form.Group>
+            <div className="mt-3">
+              <strong>Company:</strong> {selectedCompany || "N/A"}
+            </div>
+          )}
       </div>
 
       <div className="mb-4">

@@ -79,5 +79,28 @@ const collaborationApi = {
   getCollabReport: (collabId) => {
     return apiClient.get(`/report/${collabId}`);
   },
+
+  getCompanies: () => {
+    return apiClient.get(`/company-names`);
+  },
+  getCollabsByCompanyUserEmail: (email) => {
+    return apiClient.get("/by-email-company/" + email);
+  },
+  getCollabsByPersonUserEmail: (email) => {
+    return apiClient.get("/by-email-person/" + email);
+  },
+
+  getContributorsContact: (createdByEmail) => {
+    return apiClient.get(`/contributorsContact`, {
+      params: { createdByEmail },
+    });
+  },
+
+  addContributors: (collabId, payload) => {
+    return apiClient.put(
+      `/${collabId}/add-contributors`,
+      payload
+    );
+  },
 };
 export default collaborationApi;

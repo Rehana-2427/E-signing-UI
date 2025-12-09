@@ -11,16 +11,16 @@ import AuditTrail from "./pages/AuditTrail";
 import Chat from "./pages/Chat";
 import CollabObject from "./pages/Collabs/CollabObject";
 import CollabOverview from "./pages/Collabs/CollabOverView";
+import CollabTabs from "./pages/Collabs/CollabTabs";
 import RecivedCollabs from "./pages/Collabs/RecivedCollabs";
-import UserCollabs from "./pages/Collabs/UserCollabs";
 import MyCompanies from "./pages/Comapnies/MyCompanies";
-import Contacts from "./pages/Contacts";
 import Invitations from "./pages/Invitation/Invitations";
 import NewConsent from "./pages/NewConsent";
 import Profile from "./pages/Profile";
 import ChatModal from "./pages/chatComponent/ChatModal";
 import ReviewersChat from "./pages/chatComponent/ReviewersChat";
 import SignersChat from "./pages/chatComponent/SignersChat";
+import ContactTabs from "./pages/contacts/ContactTabs";
 import CompanyCreditReport from "./pages/credits/CompanyCreditReport";
 import CompanyCreditTransactionHistory from "./pages/credits/CompanyCreditTransactionHistory";
 import CreditRequest from "./pages/credits/CreditRequest";
@@ -55,7 +55,7 @@ const DashboardRoute = () => {
         <Route path="/my-consents/audit-trail" element={<AuditTrail />} />
         <Route path="/my-docs" element={<MyDocs />} />
         <Route path="/my-docs/view" element={<RecipentViewDoc />} />
-        <Route path="/contacts" element={<Contacts />} />
+        <Route path="/contacts" element={<ContactTabs />} />
         {/* <Route path="/creditPassBook" element={<CreditPassBook />} />
         <Route path="/creditPassBook/transaction-history" element={<CreditTransactionSummary />} /> */}
         <Route path="/profile" element={<Profile />} />
@@ -83,7 +83,7 @@ const DashboardRoute = () => {
           path="/review-documents/review-file"
           element={<FileReviewer />}
         />
-        <Route path="/my-collabs" element={<UserCollabs />} />
+        <Route path="/my-collabs" element={<CollabTabs />} />
         <Route path="/my-collabs/create-collab" element={<CollabOverview />} />
         <Route path="/my-collabs/collab-object" element={<CollabObject />} />
         <Route

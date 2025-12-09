@@ -33,7 +33,7 @@ const NewConsent = () => {
   }, [userEmail]);
 
   const goToStep = (nextStep) => {
-    navigate(`/dashboard/new-consent/step/${nextStep}`, {
+    navigate(`/dashboard/my-consents/new-consent/step/${nextStep}`, {
       state: { formData },
     });
   };

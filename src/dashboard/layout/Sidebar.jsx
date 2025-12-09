@@ -34,6 +34,7 @@ const Sidebar = () => {
         );
       }
     }
+
     const handleScroll = () => {
       if (scrollContainerRef.current) {
         const scrollPosition = scrollContainerRef.current.scrollTop;
@@ -62,11 +63,6 @@ const Sidebar = () => {
       label: "Dashboard",
       icon: <FaTachometerAlt size={30} />,
     },
-    // {
-    //   to: "/dashboard/new-consent/step/1",
-    //   label: "New Consent",
-    //   icon: <FaPlusCircle size={30} />,
-    // },
     {
       to: "/dashboard/my-consents",
       label: "My Consents & Agreements",
@@ -82,20 +78,18 @@ const Sidebar = () => {
       label: "Contacts",
       icon: <FaAddressBook size={30} />,
     },
-
     {
       to: "/dashboard/my-docs",
       label: "My Docs",
       icon: <FaFolderOpen size={30} />,
     },
     {
-      to: "/dashboard/templates",
+      to: "/dashboard/templates?tab=consent",
       label: "Templates",
       icon: <FaFilePdf size={30} />,
     },
-
     {
-      to: "/dashboard/review-documents",
+      to: "/dashboard/review-documents?tab=unReviewedConsents",
       label: "Reviewed Documents",
       icon: <FaFileAlt size={30} />,
     },
@@ -104,7 +98,6 @@ const Sidebar = () => {
       label: "Credit PassBook",
       icon: <FaBook size={30} />,
     },
-
     {
       to: "/dashboard/invitations?tab=unReviewed",
       label: "Invitations",
@@ -124,60 +117,61 @@ const Sidebar = () => {
   };
 
   const isLinkActive = (link) => {
-    const currentPath = location.pathname;
-    const linkPathname = link.to.split("?")[0];
+    const currentPath = location.pathname; // e.g. "/dashboard/templates"
+    const linkPathname = link.to.split("?")[0]; // removes "?tab=consent"
 
+    // Special cases
     if (linkPathname === "/dashboard/creditRequest") {
-      // Mark active if currentPath is exactly or starts with this path (including nested routes)
       return (
         currentPath === "/dashboard/creditRequest" ||
         currentPath.startsWith("/dashboard/creditRequest/")
       );
     }
+
     if (linkPathname === "/dashboard/my-collabs") {
-      // Mark active if currentPath is exactly or starts with this path (including nested routes)
       return (
-        currentPath === " /dashboard/my-collabs" ||
+        currentPath === "/dashboard/my-collabs" ||
         currentPath.startsWith("/dashboard/my-collabs")
       );
     }
 
     if (linkPathname === "/dashboard/review-documents") {
-      // Mark active if currentPath is exactly or starts with this path (including nested routes)
       return (
         currentPath === "/dashboard/review-documents" ||
         currentPath.startsWith("/dashboard/review-documents/")
       );
     }
+
     if (linkPathname === "/dashboard/invitations") {
-      // Mark active if currentPath is exactly or starts with this path (including nested routes)
       return (
         currentPath === "/dashboard/invitations" ||
         currentPath.startsWith("/dashboard/invitations/")
       );
     }
+
     const specialCases = {
       "/dashboard/my-docs": "/dashboard/my-docs/view",
       "/dashboard/creditPassBook":
         "/dashboard/creditPassBook/transaction-history",
       "/dashboard/my-consents": "/dashboard/my-consents/audit-trail",
-      "/dashboard/templates": "/dashboard/templates/edit-template",
       "/dashboard/contacts": "/dashboard/contacts/chat",
-      // "/dashboard/creditRequest": "/dashboard/creditRequest/user/user-transaction-history",
-      // "/dashboard/creditRequest": "/dashboard/creditRequest/organization/organization-transaction-history",
     };
+
     for (const [key, basePath] of Object.entries(specialCases)) {
-      if (link.to === key && currentPath.startsWith(basePath)) {
+      if (linkPathname === key && currentPath.startsWith(basePath)) {
         return true;
       }
     }
+
     if (
       currentPath.startsWith("/dashboard/my-docs") ||
       currentPath.startsWith("/hr-dashboard/evergreenjobs-applications")
     ) {
-      return link.to === "/dashboard/my-docs"; // Mark /hr-dashboard as active
+      return linkPathname === "/dashboard/my-docs";
     }
-    return currentPath === link.to;
+
+    // FINAL FIX — correct comparison
+    return currentPath === linkPathname;
   };
 
   const renderNavLinks = () => (
@@ -233,6 +227,7 @@ const Sidebar = () => {
                   )}
                   {link.label}
                 </div>
+
                 <div
                   className="triangle"
                   style={{
@@ -250,6 +245,7 @@ const Sidebar = () => {
                 />
               </div>
             </Link>
+
             <hr
               style={{ width: "100%", borderColor: "black", margin: "5px 0" }}
             />

@@ -1,15 +1,18 @@
 import { useEffect, useState } from "react";
 import { Button, Card, Col, Form, Row } from "react-bootstrap";
 import { IoArrowBackCircleSharp } from "react-icons/io5";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import adminApi from "../../../api/adminApi";
 import collaborationApi from "../../../api/collaborationApi";
+import companyApi from "../../../api/company";
+import companyUserApi from "../../../api/companyUsers";
 import CollabContributors from "./CollabContributors";
 import "./collab.css";
 
 const CollabOverview = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const user = JSON.parse(localStorage.getItem("user"));
   const senderEmail = user?.userEmail;
   const [contributors, setContributors] = useState([]);
@@ -31,6 +34,57 @@ const CollabOverview = () => {
     totalCost: 0,
   });
 
+  const [userCompanies, setUserCompanies] = useState([]);
+  const [assignedCompanies, setAssignedCompanies] = useState([]);
+  const [collaborationCompanies, setCollaborationCompanies] = useState([]);
+  const distinctCompanies = Array.from(
+    new Map(
+      [...userCompanies, ...assignedCompanies, ...collaborationCompanies].map(
+        (c) => [c.companyName, c]
+      )
+    ).values()
+  );
+  useEffect(() => {
+    // Prefill collaboration name if passed from templates
+    if (location.state?.collaborationName) {
+      setFormData((prev) => ({
+        ...prev,
+        collaborationName: location.state.collaborationName,
+      }));
+    }
+  }, [location.state]);
+
+  useEffect(() => {
+    const fetchUserCompanies = async () => {
+      try {
+        const user = JSON.parse(localStorage.getItem("user"));
+        if (!user) return;
+
+        const getComapnies = await collaborationApi.getCompanies();
+        const formattedCompanies = (getComapnies.data || []).map(
+          (name, index) => ({
+            id: "collab-" + index,
+            companyName: name.trim(),
+          })
+        );
+        setCollaborationCompanies(formattedCompanies);
+
+        console.log("Company Names from Collab API:", getComapnies.data);
+        const response = await companyApi.getCompaniesByEmail(user.userEmail);
+        setUserCompanies(response.data || []);
+
+        const assignedResponse = await companyUserApi.getAssignedCompanies(
+          user.userEmail
+        );
+        setAssignedCompanies(assignedResponse.data || []);
+      } catch (error) {
+        console.error("Error fetching user companies:", error);
+      }
+    };
+
+    fetchUserCompanies();
+  }, []);
+
   // Set default deadline (10 days from today)
   useEffect(() => {
     const today = new Date();
@@ -41,22 +95,6 @@ const CollabOverview = () => {
       deadline: deadline.toISOString().split("T")[0],
     }));
   }, []);
-
-  // useEffect(() => {
-  //   const baseDuration = 10;
-  //   const duration = parseInt(formData.collaborationDuration) || baseDuration;
-  //   const extraDays = Math.max(0, duration - baseDuration);
-  //   const extraCharge = extraDays * 0.5;
-
-  //   setExtraCharge(extraCharge);
-  //   const baseCost = baseDuration * 0.5;
-
-  //   setFormData((prevFormData) => ({
-  //     ...prevFormData,
-  //     cost: baseCost+extraCharge,
-  //     extraTime: extraDays,
-  //   }));
-  // }, [formData.collaborationDuration]); // Recalculate when duration changes
 
   useEffect(() => {
     if (formData.createdOn && formData.deadline) {
@@ -92,6 +130,28 @@ const CollabOverview = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    // If selecting OTHER, keep dropdown value = "OTHER"
+    if (name === "companyOrPerson" && value === "OTHER") {
+      setFormData({
+        ...formData,
+        companyOrPerson: "OTHER",
+        customCompanyName: "", // reset input
+      });
+      return;
+    }
+
+    // Custom company typing should NOT touch dropdown
+    if (name === "customCompanyName") {
+      setFormData({
+        ...formData,
+        customCompanyName: value,
+        companyOrPerson: value,
+      });
+      return;
+    }
+
+    // Default update
     setFormData({ ...formData, [name]: value });
   };
 
@@ -117,7 +177,7 @@ const CollabOverview = () => {
       collaborationApi
         .getTotalCollabCharge(senderEmail)
         .then((res) => {
-          setCollaborationCharge(res.data || 0); // Ensure a valid number
+          setCollaborationCharge(res.data || 0);
         })
         .catch((err) => {
           console.error("Failed to load collaboration charge", err);
@@ -153,10 +213,15 @@ const CollabOverview = () => {
     const extraDays = Math.max(0, selectedDuration - baseDuration);
     const extraCharge = extraDays * 0.5;
 
+    const companyName =
+      formData.companyOrPerson === "OTHER"
+        ? formData.customCompanyName // use typed name
+        : formData.companyOrPerson;
+
     const payload = {
       collaborationName: formData.collaborationName,
       forCompany,
-      companyName: forCompany ? formData.companyOrPerson : null,
+      companyName: forCompany ? companyName : null, // use updated variable
       forPerson,
       personName: forPerson ? formData.companyOrPerson : null,
       createdOn: formData.createdOn,
@@ -230,7 +295,9 @@ const CollabOverview = () => {
   return (
     <div className="scrollable-container" style={{ height: "100%" }}>
       <div className="header-container">
-        <h1><strong>Add New Collaboration</strong></h1>
+        <h1>
+          <strong>Add New Collaboration</strong>
+        </h1>
         <Button onClick={handleBack} variant="info" className="tooltip-btn">
           <IoArrowBackCircleSharp />
           <span className="tooltip-text">Go to Back</span>
@@ -292,17 +359,61 @@ const CollabOverview = () => {
                     ? "Company Name"
                     : "Person Name"}
                 </Form.Label>
-                <Form.Control
-                  type="text"
-                  name="companyOrPerson"
-                  value={formData.companyOrPerson}
-                  onChange={handleChange}
-                  placeholder={
-                    formData.forType === "Company"
-                      ? "Enter company name"
-                      : "Enter person name"
-                  }
-                />
+
+                {formData.forType === "Company" && (
+                  <>
+                    <Form.Select
+                      name="companyOrPerson"
+                      value={formData.companyOrPerson}
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="">Select a company</option>
+
+                      {distinctCompanies.map((c) => (
+                        <option key={c.id} value={c.companyName}>
+                          {c.companyName}
+                        </option>
+                      ))}
+
+                      <option value="OTHER">other</option>
+                    </Form.Select>
+
+                    {formData.companyOrPerson === "OTHER" && (
+                      <Form.Control
+                        type="text"
+                        name="customCompanyName"
+                        placeholder="Enter company name"
+                        value={formData.customCompanyName || ""}
+                        onChange={handleChange}
+                        className="mt-2"
+                        required
+                      />
+                    )}
+                  </>
+                )}
+
+                {formData.forType === "Person" && (
+                  <Form.Control
+                    type="text"
+                    name="companyOrPerson"
+                    value={formData.companyOrPerson}
+                    onChange={handleChange}
+                    placeholder="Enter person name"
+                  />
+                )}
+
+                {/* {formData.companyOrPerson === "OTHER" && (
+                  <Form.Control
+                    type="text"
+                    name="customCompanyName"
+                    placeholder="Enter company name"
+                    value={formData.customCompanyName || ""}
+                    onChange={handleChange}
+                    className="mt-2"
+                    required
+                  />
+                )} */}
               </Form.Group>
             </Col>
           </Row>

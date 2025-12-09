@@ -6,8 +6,8 @@ import { MdDelete } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import collaborationApi from "../../../api/collaborationApi";
 
-const UserCollabs = () => {
-  const [collaborations, setCollaborations] = useState([]);
+const PersonalCollabs = () => {
+const [collaborations, setCollaborations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedCollab, setSelectedCollab] = useState(null);
@@ -17,7 +17,7 @@ const UserCollabs = () => {
   useEffect(() => {
     if (userEmail) {
       collaborationApi
-        .getCollabInfoByEmail(userEmail)
+        .getCollabsByPersonUserEmail(userEmail)
         .then((response) => {
           const data = response.data.map((collab) => ({
             collabId: collab.id,
@@ -26,8 +26,7 @@ const UserCollabs = () => {
             collaborationDuration: collab.collaborationDuration,
             cost: collab.cost,
             costChargedTo: collab.costChargedTo,
-            forCompany: collab.forCompany,
-            companyName: collab.companyName,
+           
             forPerson: collab.forPerson,
             personName: collab.personName,
             status: collab.status,
@@ -137,7 +136,7 @@ const UserCollabs = () => {
                             )
                           }
                         >
-                          <CgGoogleTasks />
+                          <CgGoogleTasks  />
                         </Button>
                       </OverlayTrigger>
                       <OverlayTrigger
@@ -178,4 +177,6 @@ const UserCollabs = () => {
   );
 };
 
-export default UserCollabs;
+
+
+export default PersonalCollabs;

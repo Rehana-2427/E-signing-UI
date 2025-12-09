@@ -3,17 +3,17 @@ import { Button, Table } from "react-bootstrap";
 import { BsChatRightDotsFill } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
-import signerApi from "../../api/signerapi";
+import collaborationApi from "../../../api/collaborationApi";
 
-const Contacts = () => {
+const CollabContacts = () => {
   const [contacts, setContacts] = useState([]);
   const user = JSON.parse(localStorage.getItem("user"));
   const userEmail = user?.userEmail;
   const navigate = useNavigate();
   useEffect(() => {
     if (userEmail) {
-      signerApi
-        .getSignersContact(userEmail)
+      collaborationApi
+        .getContributorsContact(userEmail)
         .then((res) => {
           setContacts(res.data);
         })
@@ -44,36 +44,32 @@ const Contacts = () => {
         height: "100%",
       }}
     >
-      <h1>
-        <strong>List of all signatories</strong>
-      </h1>
+      <h4>List of all Contributors</h4>
       <Table hover>
         <thead>
           <tr style={{ background: "#f0f0f0" }}>
-            <th>Signer Name</th>
-            <th>Signer Email</th>
-            <th># of documents signed</th>
+            <th>Contributor Name</th>
+            <th>Contributor Email</th>
+            <th># of Collaborations</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {contacts.length === 0 ? (
             <tr>
-              <td colSpan="4">No signers found.</td>
+              <td colSpan="4">No Contributors found.</td>
             </tr>
           ) : (
-            contacts.map((signer, idx) => (
+            contacts.map((contributor, idx) => (
               <tr key={idx}>
-                <td>{signer.name}</td>
-                <td>{signer.email}</td>
-                <td>{signer.signedCount || 0}</td>
-                {/* <td>
-                                    <Button variant="success" onClick={handleComingSoon}> <BiMessageRoundedDetail /></Button>
-                                </td> */}
+                <td>{contributor.name}</td>
+                <td>{contributor.email}</td>
+                <td>{contributor.collaborationCount || 0}</td>
+
                 <td>
                   <Button
                     variant="success"
-                    onClick={() => handleContactClick(signer)}
+                    onClick={() => handleContactClick(contributor)}
                   >
                     <BsChatRightDotsFill />
                   </Button>
@@ -87,4 +83,4 @@ const Contacts = () => {
   );
 };
 
-export default Contacts;
+export default CollabContacts;

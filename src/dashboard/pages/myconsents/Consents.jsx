@@ -3,12 +3,14 @@ import { useEffect, useState } from "react";
 import { Button, Tab, Tabs } from "react-bootstrap";
 import { FaPlusCircle } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import CompanyConsents from "./CompanyConsents";
 import Drafts from "./Drafts";
 import MyConsents from "./MyConsents";
+import PersonalConsents from "./PersonalConsents";
 
 const Consents = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("sent");
+  const [activeTab, setActiveTab] = useState("all");
   useEffect(() => {
     const storedTab = localStorage.getItem("consentsActiveTab");
     if (storedTab) {
@@ -38,9 +40,16 @@ const Consents = () => {
         id="consents-tabs"
         className="mb-3"
       >
-        <Tab eventKey="sent" title="Sent">
+        <Tab eventKey="all" title="All Consents">
           <MyConsents />
         </Tab>
+        <Tab eventKey="company" title="Company Consents">
+          <CompanyConsents />
+        </Tab>
+        <Tab eventKey="personal" title="Personal Consents">
+          <PersonalConsents />
+        </Tab>
+       
         <Tab eventKey="drafts" title="Drafts">
           <Drafts />
         </Tab>

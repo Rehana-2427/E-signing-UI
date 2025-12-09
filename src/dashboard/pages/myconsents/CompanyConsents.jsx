@@ -12,7 +12,7 @@ import documentApi from "../../../api/documentapi";
 import ReminderModal from "../ReminderModal";
 import SearchBar from "../SearchBar";
 
-const MyConsents = () => {
+const CompanyConsents = () => {
   const navigate = useNavigate();
   const [consents, setConsents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -34,7 +34,7 @@ const MyConsents = () => {
             searchTerm
           );
         } else {
-          response = await documentApi.getMyConsents(senderEmail);
+          response = await documentApi.getCompanyConsents(senderEmail);
         }
         setConsents(response.data || []);
       } catch (error) {
@@ -136,7 +136,7 @@ const MyConsents = () => {
           <tr>
             <th>#id</th>
             <th>Document Name</th>
-            <th>CompanyName</th>
+            <th>Company Name</th>
             <th>Sent On</th>
             <th># of Reviewers count</th>
             <th># of signers count</th>
@@ -176,24 +176,24 @@ const MyConsents = () => {
                   {consent.signedCount} / {consent.totalSigners}
                 </td>
                 {/* <td>
-                
-                  <Button
-                    variant="success"
-                    size="sm"
-                    className="me-2"
-                    title="Download"
-                  >
-                    <AiOutlineDownload />
-                  </Button>
-                  <Button
-                    variant="info"
-                    size="sm"
-                    title="Email"
-                    onClick={() => handleEmailClick(consent)}
-                  >
-                    <MdEmail />
-                  </Button>
-                </td> */}
+                 
+                   <Button
+                     variant="success"
+                     size="sm"
+                     className="me-2"
+                     title="Download"
+                   >
+                     <AiOutlineDownload />
+                   </Button>
+                   <Button
+                     variant="info"
+                     size="sm"
+                     title="Email"
+                     onClick={() => handleEmailClick(consent)}
+                   >
+                     <MdEmail />
+                   </Button>
+                 </td> */}
                 {/* <td>{consent.reviewerStatus}</td> */}
 
                 <td>
@@ -278,16 +278,16 @@ const MyConsents = () => {
                 </td>
 
                 {/* <td>
-                  <Button
-                    variant="secondary"
-                    onClick={() =>
-                      handleChat(consent.documentId, consent.documentName)
-                    }
-                    title="Chat"
-                  >
-                    <IoChatbubbles />
-                  </Button>
-                </td> */}
+                   <Button
+                     variant="secondary"
+                     onClick={() =>
+                       handleChat(consent.documentId, consent.documentName)
+                     }
+                     title="Chat"
+                   >
+                     <IoChatbubbles />
+                   </Button>
+                 </td> */}
 
                 <td>
                   <OverlayTrigger
@@ -343,4 +343,4 @@ const MyConsents = () => {
   );
 };
 
-export default MyConsents;
+export default CompanyConsents;

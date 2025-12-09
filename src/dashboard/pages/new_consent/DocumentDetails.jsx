@@ -8,6 +8,8 @@ import Swal from "sweetalert2";
 import * as Yup from "yup";
 import adminApi from "../../../api/adminApi";
 import adminUserCreditApi from "../../../api/adminUserCreditApi";
+import companyApi from "../../../api/company";
+import companyUserApi from "../../../api/companyUsers";
 import documentApi from "../../../api/documentapi";
 import "./newContent.css";
 
@@ -25,12 +27,39 @@ const DocumentDetails = ({ onNext, formData, setFormData, userCredit }) => {
   const [creditSource, setCreditSource] = useState("user"); // "user" or "company"
   const [reviewerEmail, setReviewerEmail] = useState("");
   const [reviewers, setReviewers] = useState([]);
-
+  const [userCompanies, setUserCompanies] = useState([]);
+  const [assignedCompanies, setAssignedCompanies] = useState([]);
+  const [selectedCompany, setSelectedCompany] = useState("");
   const basicFormSchema = Yup.object().shape({
     documentName: Yup.string().required("Document Name is required"),
     description: Yup.string(),
     file: Yup.mixed().required("A file is required"),
   });
+
+  useEffect(() => {
+    const fetchUserCompanies = async () => {
+      try {
+        const user = JSON.parse(localStorage.getItem("user"));
+        if (!user) return;
+
+        const response = await companyApi.getCompaniesByEmail(user.userEmail);
+        setUserCompanies(response.data || []);
+
+        const assignedResponse = await companyUserApi.getAssignedCompanies(
+          user.userEmail
+        );
+        setAssignedCompanies(assignedResponse.data || []);
+      } catch (error) {
+        console.error("Error fetching user companies:", error);
+      }
+    };
+
+    fetchUserCompanies();
+  }, []);
+  const mergedCompanies = [
+    ...userCompanies.map((c) => ({ ...c, type: "owned" })),
+    ...assignedCompanies.map((c) => ({ ...c, type: "assigned" })),
+  ];
   useEffect(() => {
     adminApi
       .getCreditSettings()
@@ -215,7 +244,13 @@ const DocumentDetails = ({ onNext, formData, setFormData, userCredit }) => {
 
             const mergedFile = await mergeFiles(values.file, additionalFiles);
 
-            const finalValues = { ...values, file: mergedFile, creditSource,reviewers };
+            const finalValues = {
+              ...values,
+              file: mergedFile,
+              creditSource,
+              companyName: creditSource === "company" ? selectedCompany : null,
+              reviewers,
+            };
             setFormData((prev) => ({ ...prev, ...finalValues }));
             onNext();
           }}
@@ -239,6 +274,14 @@ const DocumentDetails = ({ onNext, formData, setFormData, userCredit }) => {
                 checked={creditSource === "user"}
                 onChange={(e) => setCreditSource(e.target.value)}
               />
+              {/* <Form.Check
+                type="radio"
+                label="Use Company Credits"
+                name="creditSource"
+                value="company"
+                checked={creditSource === "company"}
+                onChange={(e) => setCreditSource(e.target.value)}
+              /> */}
               <Form.Check
                 type="radio"
                 label="Use Company Credits"
@@ -246,7 +289,35 @@ const DocumentDetails = ({ onNext, formData, setFormData, userCredit }) => {
                 value="company"
                 checked={creditSource === "company"}
                 onChange={(e) => setCreditSource(e.target.value)}
+                disabled={mergedCompanies.length === 0}
               />
+
+              {creditSource === "company" && mergedCompanies.length === 0 && (
+                <div className="mt-3 text-danger">
+                  <strong>Sorry!</strong> You don’t have access to any company
+                  accounts.
+                  <br />
+                  You are not eligible to use company credits. Please contact
+                  your administrator if you believe this is an error.
+                </div>
+              )}
+
+              {creditSource === "company" && mergedCompanies.length > 0 && (
+                <Form.Group controlId="selectCompany" className="mt-3">
+                  <Form.Label>Select Company</Form.Label>
+                  <Form.Select
+                    value={selectedCompany}
+                    onChange={(e) => setSelectedCompany(e.target.value)}
+                  >
+                    <option value="">-- Select Company --</option>
+                    {mergedCompanies.map((company) => (
+                      <option key={company.id} value={company.companyName}>
+                        {company.companyName}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+              )}
               <Form.Group controlId="documentName" className="mb-3">
                 <Form.Label className="required-label">
                   Document Name

@@ -33,6 +33,9 @@ const SignatoriesSettings = ({
   const [creditSource, setCreditSource] = useState(
     formData.creditSource || "user"
   );
+  const [selectedCompany, setSelectedCompany] = useState(
+    formData.companyName || ""
+  );
 
   const reviewers = formData.reviewers || [];
 
@@ -91,6 +94,8 @@ const SignatoriesSettings = ({
       reminderDays,
       sendFinalCopy,
       creditSource,
+      companyName: creditSource === "company" ? selectedCompany : null,
+
       reviewers,
     }));
     onNext();
@@ -128,7 +133,7 @@ const SignatoriesSettings = ({
       draft: true,
       signers: signatories || [],
       reviewers: formData.reviewers.map((r) => ({
-        reviewerEmail: r.email ,
+        reviewerEmail: r.email,
       })),
     };
 

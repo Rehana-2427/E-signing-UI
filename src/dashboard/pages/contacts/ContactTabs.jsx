@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
 import { Tab, Tabs } from "react-bootstrap";
 import { useLocation, useSearchParams } from "react-router-dom";
-import CollabTemplates from "./CollabTemplates";
-import ConsentTemplates from "./ConsentTemplates";
+import CollabContacts from "./CollabContacts";
+import SignatoryContacts from "./SignatoryContacts";
 
-const Templates = () => {
+const ContactTabs = () => {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Always read from URL; default to "consent"
-  const tabFromUrl = searchParams.get("tab") || "consent";
+  const tabFromUrl = searchParams.get("tab") || "signatories";
   const [activeTab, setActiveTab] = useState(tabFromUrl);
 
   const handleTabChange = (key) => {
@@ -18,25 +18,25 @@ const Templates = () => {
   };
 
   useEffect(() => {
-    const tab = searchParams.get("tab") || "consent";
+    const tab = searchParams.get("tab") || "signatories";
     if (tab !== activeTab) setActiveTab(tab);
   }, [location.search]);
 
   return (
     <div className="scrollable-container" style={{ height: "100%" }}>
       <h1>
-        <strong>Templates</strong>
+        <strong>Contacts</strong>
       </h1>
       <Tabs activeKey={activeTab} onSelect={handleTabChange} className="mb-3">
-        <Tab eventKey="consent" title="Consent Templates">
-          <ConsentTemplates />
+        <Tab eventKey="signatories" title="Signatories">
+          <SignatoryContacts />
         </Tab>
-        <Tab eventKey="collab" title="Collaboration Templates">
-          <CollabTemplates />
+        <Tab eventKey="contributors" title="Contributors">
+          <CollabContacts />
         </Tab>
       </Tabs>
     </div>
   );
 };
 
-export default Templates;
+export default ContactTabs;

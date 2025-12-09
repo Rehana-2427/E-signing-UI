@@ -6,8 +6,8 @@ import { MdDelete } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import collaborationApi from "../../../api/collaborationApi";
 
-const UserCollabs = () => {
-  const [collaborations, setCollaborations] = useState([]);
+const BusinessCollabs = () => {
+ const [collaborations, setCollaborations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedCollab, setSelectedCollab] = useState(null);
@@ -17,7 +17,7 @@ const UserCollabs = () => {
   useEffect(() => {
     if (userEmail) {
       collaborationApi
-        .getCollabInfoByEmail(userEmail)
+        .getCollabsByCompanyUserEmail(userEmail)
         .then((response) => {
           const data = response.data.map((collab) => ({
             collabId: collab.id,
@@ -28,8 +28,7 @@ const UserCollabs = () => {
             costChargedTo: collab.costChargedTo,
             forCompany: collab.forCompany,
             companyName: collab.companyName,
-            forPerson: collab.forPerson,
-            personName: collab.personName,
+         
             status: collab.status,
           }));
           setCollaborations(data);
@@ -147,7 +146,7 @@ const UserCollabs = () => {
                         }
                       >
                         <Button variant="danger" className="ms-2">
-                          <MdDelete />
+                          <MdDelete  />
                         </Button>
                       </OverlayTrigger>
                     </td>
@@ -178,4 +177,4 @@ const UserCollabs = () => {
   );
 };
 
-export default UserCollabs;
+export default BusinessCollabs

@@ -100,5 +100,16 @@ const documentApi = {
   getDocumentDetail: (documentId) => {
     return apiClient.get(`/${documentId}/summary`);
   },
+
+    getPersonalConsents: (senderEmail) => {
+    return apiClient.get("/personal-consents", {
+      params: { senderEmail },
+    });
+  },
+    getCompanyConsents: (senderEmail) => {
+    return apiClient.get("/company-consents", {
+      params: { senderEmail },
+    });
+  },
 };
 export default documentApi;

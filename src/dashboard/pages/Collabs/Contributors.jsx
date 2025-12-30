@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button, Form, Modal, Table } from "react-bootstrap";
 import { BsWechat } from "react-icons/bs";
+import { MdDelete } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import collaborationApi from "../../../api/collaborationApi";
@@ -115,6 +116,29 @@ const Contributors = ({ collabId, collaborationName }) => {
   if (loading) return <div>Loading contributors...</div>;
   if (error) return <div>{error}</div>;
 
+  const handleDeleteContributor = async (email) => {
+    try {
+      await collaborationApi.deleteContributor(collabId, email);
+
+      setContributors((prev) => prev.filter((c) => c.email !== email));
+
+      Swal.fire({
+        title: "Deleted!",
+        text: "Contributor has been deleted.",
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+    } catch (err) {
+      console.error("Error deleting contributor:", err);
+      Swal.fire({
+        title: "Error",
+        text: "Failed to delete contributor",
+        icon: "error",
+      });
+    }
+  };
+
   return (
     <div>
       <br />
@@ -142,6 +166,7 @@ const Contributors = ({ collabId, collaborationName }) => {
             <th>Name</th>
             <th>Email</th>
             <th>Role</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -151,6 +176,14 @@ const Contributors = ({ collabId, collaborationName }) => {
               <td>{contributor.name}</td>
               <td>{contributor.email}</td>
               <td>{contributor.role}</td>
+              <td>
+                <Button
+                  variant="danger"
+                  onClick={() => handleDeleteContributor(contributor.email)}
+                >
+                  <MdDelete />
+                </Button>
+              </td>
             </tr>
           ))}
         </tbody>

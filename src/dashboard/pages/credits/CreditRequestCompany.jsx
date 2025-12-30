@@ -22,7 +22,7 @@ const CreditRequestCompany = () => {
         if (!user) return;
 
         // Assuming this endpoint exists and returns a list of companies created by the user
-        const response = await companyApi.getCompaniesByEmail(user.userEmail);
+        const response = await companyApi.getListOfCompanyByAdminEmail(user.userEmail);
         setUserCompanies(Array.isArray(response.data) ? response.data : []);
 
         const assignedResponse = await companyUserApi.getAssignedCompanies(

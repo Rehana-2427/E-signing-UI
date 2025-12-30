@@ -17,6 +17,7 @@ import adminCompanyCreditApi from "../../../api/adminCompanyCredit";
 import adminUserCreditApi from "../../../api/adminUserCreditApi";
 import companyApi from "../../../api/company";
 import companyUserApi from "../../../api/companyUsers";
+import Pagination from "../../../components/Pagination";
 import CompanyCreditRequestModal from "../credits/CompanyCreditRequestModal";
 
 const AssignedComapnies = () => {
@@ -34,6 +35,11 @@ const AssignedComapnies = () => {
   const user = JSON.parse(localStorage.getItem("user"));
   const userName = user?.userName;
   const [companyCredits, setCompanyCredits] = useState({});
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(0);
+  const [sortedColumn, setSortedColumn] = useState(null);
+  const [sortOrder, setSortOrder] = useState("asc");
 
   // Function to fetch the assigned companies
   // const fetchCompanies = async () => {
@@ -56,11 +62,19 @@ const AssignedComapnies = () => {
       if (!user?.userEmail) return;
 
       const response = await companyUserApi.getAssignedCompanies(
-        user.userEmail
+        user.userEmail,
+        page,
+        pageSize,
+        sortedColumn,
+        sortOrder
       );
       const companiesData = response.data || [];
-      setCompanies(companiesData);
+      const pageData = response.data;
 
+      setCompanies(pageData.content || []); // ✅ ARRAY
+      setTotalPages(pageData.totalPages || 0);
+
+      setTotalPages(response.data.totalPages || 0);
       const creditPromises = companiesData.map(async (company) => {
         try {
           const res = await adminCompanyCreditApi.getCompanyCreditsByCompany(
@@ -72,8 +86,11 @@ const AssignedComapnies = () => {
             `Error fetching credits for ${company.companyName}:`,
             error
           );
+          setTotalPages(0);
+          setCompanies([])
           return { name: company.companyName, credits: null };
         }
+        
       });
 
       const creditResults = await Promise.all(creditPromises);
@@ -95,7 +112,7 @@ const AssignedComapnies = () => {
 
   useEffect(() => {
     fetchCompanies();
-  }, []);
+  }, [page, pageSize, sortedColumn, sortOrder]);
 
   // Helper function to get the initials from a name
   const getInitials = (name = "") => {
@@ -190,9 +207,32 @@ const AssignedComapnies = () => {
       });
     }
   };
+  const handlePageSizeChange = (e) => {
+    const size = parseInt(e.target.value);
+    setPageSize(size);
+    setPage(0);
+  };
 
+  const handlePageClick = (data) => {
+    const selectedPage = Math.max(0, Math.min(data.selected, totalPages - 1)); // Ensure selectedPage is within range
+    setPage(selectedPage);
+    localStorage.setItem("assignedCompanies", selectedPage); // Store the page number in localStorage
+  };
+
+  const handleSort = (column) => {
+    if (sortedColumn === column) {
+      // Toggle sort order if the same column is clicked
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      // Sort by the new column (default to ascending)
+      setSortedColumn(column);
+      setSortOrder("asc");
+    }
+  };
   return (
-    <>
+    <div
+      style={{ minHeight: "80vh", display: "flex", flexDirection: "column" }}
+    >
       {loading ? (
         <div className="d-flex justify-content-center align-items-center">
           <Spinner animation="border" role="status" />
@@ -347,6 +387,17 @@ const AssignedComapnies = () => {
               })}
             </tbody>
           </Table>
+          {companies.length > 0 && totalPages > 0 && (
+            <div style={{ marginTop: "auto" }}>
+              <Pagination
+                page={page}
+                pageSize={pageSize}
+                totalPages={totalPages}
+                handlePageSizeChange={handlePageSizeChange}
+                handlePageClick={handlePageClick}
+              />
+            </div>
+          )}
         </>
       )}
 
@@ -412,7 +463,7 @@ const AssignedComapnies = () => {
         onSend={handleSendRequestForCredits}
         showCreditPriceUnit={false} // 👈 hide field
       />
-    </>
+    </div>
   );
 };
 

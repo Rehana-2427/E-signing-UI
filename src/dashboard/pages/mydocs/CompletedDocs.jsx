@@ -5,6 +5,7 @@ import { FaDownload, FaEnvelope, FaEye } from "react-icons/fa";
 import { IoChatbubbles } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import signerApi from "../../../api/signerapi";
+import Pagination from "../../../components/Pagination";
 import SearchBar from "../SearchBar";
 
 const CompletedDocs = () => {
@@ -15,6 +16,11 @@ const CompletedDocs = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState(""); // track the last submitted search
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(0);
+  const [sortedColumn, setSortedColumn] = useState(null);
+  const [sortOrder, setSortOrder] = useState("asc");
 
   useEffect(() => {
     const fetchCompletedDocs = async (query) => {
@@ -24,15 +30,22 @@ const CompletedDocs = () => {
         if (query && query.trim() !== "") {
           response = await signerApi.getSearchCompletedDocumentsByEmail(
             userEmail,
-            query
+            query,
+            page,
+            pageSize,
+            sortedColumn,
+            sortOrder
           );
         } else {
           response = await signerApi.getCompletedDocumentsByEmail(userEmail);
         }
-        setDocs(response.data || []);
+        const content = response?.data?.content;
+        setTotalPages(response.data.totalPages || 0);
+        setDocs(Array.isArray(content) ? content : []);
       } catch (error) {
         console.error("Failed to fetch consents:", error);
         setDocs([]);
+        setTotalPages(0);
       } finally {
         setLoading(false);
       }
@@ -45,7 +58,7 @@ const CompletedDocs = () => {
     return () => {
       debouncedFetch.cancel();
     };
-  }, [userEmail, searchTerm]);
+  }, [userEmail, searchTerm, page, pageSize, sortedColumn, sortOrder]);
 
   const handleView = (documentId, documentName, signedFile, fromTab) => {
     if (!documentId || !documentName || !userEmail) return;
@@ -149,8 +162,37 @@ const CompletedDocs = () => {
       },
     });
   };
+
+  const handlePageSizeChange = (e) => {
+    const size = parseInt(e.target.value);
+    setPageSize(size);
+    setPage(0);
+  };
+
+  const handlePageClick = (data) => {
+    const selectedPage = Math.max(0, Math.min(data.selected, totalPages - 1)); // Ensure selectedPage is within range
+    setPage(selectedPage);
+    localStorage.setItem("completedDocs", selectedPage); // Store the page number in localStorage
+  };
+
+  const handleSort = (column) => {
+    if (sortedColumn === column) {
+      // Toggle sort order if the same column is clicked
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      // Sort by the new column (default to ascending)
+      setSortedColumn(column);
+      setSortOrder("asc");
+    }
+  };
   return (
-    <div>
+    <div
+      style={{
+        minHeight: "80vh",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <div
         style={{
           display: "flex",
@@ -259,6 +301,17 @@ const CompletedDocs = () => {
           )}
         </tbody>
       </Table>
+      <div style={{ marginTop: "auto" }}>
+        {docs.length > 0 && totalPages > 0 && (
+          <Pagination
+            page={page}
+            pageSize={pageSize}
+            totalPages={totalPages}
+            handlePageSizeChange={handlePageSizeChange}
+            handlePageClick={handlePageClick}
+          />
+        )}
+      </div>
     </div>
   );
 };

@@ -9,8 +9,8 @@ const apiClient = axios.create({
 });
 const adminUserCreditApi = {
 
-    getUserCreditList: () =>
-        apiClient.get("/allUsersCredits"),
+    getUserCreditList: (page,pageSize,sortedColumn,sortOrder) =>
+        apiClient.get("/allUsersCredits", { params: { page, pageSize, sortedColumn, sortOrder } }),
 
     getUserCreditsByEmail: (email) =>
         apiClient.get(`/userCredits`, { params: { email } }),

@@ -23,8 +23,12 @@ const companyApi = {
   createCompany: (companyData) => {
     return apiClient.post("/addCompany", companyData);
   },
-  getCompaniesByEmail: (email) =>
+  getCompaniesByEmail: (email,page,pageSize,sortedColumn,sortOrder) =>
     apiClient.get(`/getCompanyByAdminEmail`, {
+      params: { email,page,pageSize,sortedColumn,sortOrder },
+    }),
+    getListOfCompanyByAdminEmail: (email) =>
+    apiClient.get(`/getListOfCompanyByAdminEmail`, {
       params: { email },
     }),
 };

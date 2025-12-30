@@ -8,10 +8,17 @@ const apiClient = axios.create({
   withCredentials: true,
 });
 const adminCompanyCreditApi = {
-  getCompanyCreditList: () => apiClient.get("/allCompanyCredits"),
+  getCompanyCreditList: (page, pageSize, sortedColumn, sortOrder) =>
+    apiClient.get("/allCompanyCredits", {
+      params: { page, pageSize, sortedColumn, sortOrder },
+    }),
 
-  addCredits: (companyName, creditsToAssign,assignCPU) =>
-    apiClient.put("/assign-credits-company", { companyName, creditsToAssign,assignCPU }),
+  addCredits: (companyName, creditsToAssign, assignCPU) =>
+    apiClient.put("/assign-credits-company", {
+      companyName,
+      creditsToAssign,
+      assignCPU,
+    }),
 
   getCompanyCreditsByCompany: (companyName) =>
     apiClient.get(`/getcompanyCredits`, { params: { companyName } }),

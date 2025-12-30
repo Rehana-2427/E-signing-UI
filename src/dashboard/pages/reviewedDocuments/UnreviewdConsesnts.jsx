@@ -4,6 +4,7 @@ import { IoChatbubbles } from "react-icons/io5";
 import { VscPreview } from "react-icons/vsc";
 import { useNavigate } from "react-router-dom";
 import reviewerApi from "../../../api/reviewerApi";
+import Pagination from "../../../components/Pagination";
 
 const UnreviewdConsesnts = () => {
   const navigate = useNavigate();
@@ -13,6 +14,11 @@ const UnreviewdConsesnts = () => {
 
   const user = JSON.parse(localStorage.getItem("user"));
   const reviewerEmail = user?.userEmail;
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(0);
+  const [sortedColumn, setSortedColumn] = useState(null);
+  const [sortOrder, setSortOrder] = useState("asc");
 
   useEffect(() => {
     const fetchUnreviewedDocs = async () => {
@@ -21,11 +27,18 @@ const UnreviewdConsesnts = () => {
 
       try {
         const response = await reviewerApi.getUnRevieweDocsByEmail(
-          reviewerEmail
+          reviewerEmail,
+          page,
+          pageSize,
+          sortedColumn,
+          sortOrder
         );
-        setUnreviewedDocs(Array.isArray(response.data) ? response.data : []);
+        const content = response?.data?.content;
+        setUnreviewedDocs(Array.isArray(content) ? content : []);
+        setTotalPages(response.data.totalPages || 0);
       } catch (err) {
         setError("Failed to fetch unreviewed documents");
+        setTotalPages(0);
       } finally {
         setLoading(false);
       }
@@ -64,8 +77,36 @@ const UnreviewdConsesnts = () => {
       },
     });
   };
+  const handlePageSizeChange = (e) => {
+    const size = parseInt(e.target.value);
+    setPageSize(size);
+    setPage(0);
+  };
+
+  const handlePageClick = (data) => {
+    const selectedPage = Math.max(0, Math.min(data.selected, totalPages - 1)); // Ensure selectedPage is within range
+    setPage(selectedPage);
+    localStorage.setItem("unreviewedDocs", selectedPage); // Store the page number in localStorage
+  };
+
+  const handleSort = (column) => {
+    if (sortedColumn === column) {
+      // Toggle sort order if the same column is clicked
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      // Sort by the new column (default to ascending)
+      setSortedColumn(column);
+      setSortOrder("asc");
+    }
+  };
   return (
-    <div>
+    <div
+      style={{
+        minHeight: "80vh",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <h2>Unreviewed Documents</h2>
       <Table striped bordered hover>
         <thead>
@@ -120,6 +161,17 @@ const UnreviewdConsesnts = () => {
           )}
         </tbody>
       </Table>
+      {unreviewedDocs.length > 0 && totalPages > 0 && (
+        <div style={{ marginTop: "auto" }}>
+          <Pagination
+            page={page}
+            pageSize={pageSize}
+            totalPages={totalPages}
+            handlePageSizeChange={handlePageSizeChange}
+            handlePageClick={handlePageClick}
+          />
+        </div>
+      )}
     </div>
   );
 };

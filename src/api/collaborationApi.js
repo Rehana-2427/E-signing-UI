@@ -28,8 +28,10 @@ const collaborationApi = {
     return apiClient.get("/by-created-by/" + createdBy);
   },
 
-  getCollabInfoByEmail: (email) => {
-    return apiClient.get("/by-email/" + email);
+  getCollabInfoByEmail: (email, page, pageSize, sortedColumn, sortOrder) => {
+    return apiClient.get("/by-email/" + email, {
+      params: { page, pageSize, sortedColumn, sortOrder },
+    });
   },
 
   getContributorsDetails: (collaboration_id) => {
@@ -54,12 +56,16 @@ const collaborationApi = {
       payload // Pass the update data in the body
     );
   },
-  getCollabNotApproved: () => {
-    return apiClient.get(`/getCollabNotApproved`);
+  getCollabNotApproved: (page,pageSize,sortedColumn,sortOrder) => {
+    return apiClient.get(`/getCollabNotApproved`, {
+      params: { page, pageSize, sortedColumn, sortOrder },
+    });
   },
 
-  getApprovedCollabs: () => {
-    return apiClient.get(`/getApprovedCollabs`);
+  getApprovedCollabs: (page,pageSize,sortedColumn,sortOrder) => {
+    return apiClient.get(`/getApprovedCollabs`, {
+      params: { page, pageSize, sortedColumn, sortOrder },
+    });
   },
   updateApproval: (collabId) => {
     return apiClient.put(`/requestApproveByAdmin?collabId=${collabId}`);
@@ -83,24 +89,43 @@ const collaborationApi = {
   getCompanies: () => {
     return apiClient.get(`/company-names`);
   },
-  getCollabsByCompanyUserEmail: (email) => {
-    return apiClient.get("/by-email-company/" + email);
+  getCollabsByCompanyUserEmail: (
+    email,
+    page,
+    pageSize,
+    sortedColumn,
+    sortOrder
+  ) => {
+    return apiClient.get("/by-email-company/" + email, {
+      params: { page, pageSize, sortedColumn, sortOrder },
+    });
   },
-  getCollabsByPersonUserEmail: (email) => {
-    return apiClient.get("/by-email-person/" + email);
+  getCollabsByPersonUserEmail: (
+    email,
+    page,
+    pageSize,
+    sortedColumn,
+    sortOrder
+  ) => {
+    return apiClient.get("/by-email-person/" + email, {
+      params: { page, pageSize, sortedColumn, sortOrder },
+    });
   },
 
-  getContributorsContact: (createdByEmail) => {
+  getContributorsContact: (createdByEmail,page,pageSize,sortedColumn,sortOrder) => {
     return apiClient.get(`/contributorsContact`, {
-      params: { createdByEmail },
+      params: { createdByEmail, page, pageSize, sortedColumn, sortOrder },
     });
   },
 
   addContributors: (collabId, payload) => {
-    return apiClient.put(
-      `/${collabId}/add-contributors`,
-      payload
-    );
+    return apiClient.put(`/${collabId}/add-contributors`, payload);
+  },
+
+  deleteContributor: (collabId, email) => {
+    return apiClient.delete(`/deleteContributor`, {
+      params: { collabId, email },
+    });
   },
 };
 export default collaborationApi;

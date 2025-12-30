@@ -11,30 +11,34 @@ const apiClient = axios.create({
 const signerApi = {
   updateSignerStatus: (data) => apiClient.put("/update-status", data),
 
-  getDocumentsByEmail: (email) =>
-    apiClient.get("/documents-by-email", { params: { email } }),
+  getDocumentsByEmail: (email,page,pageSize,sortedColumn,sortOrder) =>
+    apiClient.get("/documents-by-email", { params: { email,page,pageSize,sortedColumn,sortOrder } }),
 
-  getCompletedDocumentsByEmail: (email) =>
-    apiClient.get("/completedDocs", { params: { email } }),
+  getCompletedDocumentsByEmail: (email,page,pageSize,sortedColumn,sortOrder) =>
+    apiClient.get("/completedDocs", { params: { email,page,pageSize,sortedColumn,sortOrder } }),
 
-  getSignersContact: (senderEmail) =>
-    apiClient.get("/signersContact", { params: { senderEmail } }),
+  getSignersContact: (senderEmail,page,pageSize,sortedColumn,sortOrder) =>
+    apiClient.get("/signersContact", { params: { senderEmail,page,pageSize,sortedColumn,sortOrder } }),
 
   getSignersByDocumentId: (documentId) =>
     apiClient.get(`/documents/${documentId}/signers`),
 
-  getSearchPendingDocumentsByEmail: (email, query = "") => {
+  getSearchPendingDocumentsByEmail: (email, query = "", page, pageSize, sortedColumn, sortOrder) => {
     return apiClient.get("/searchPendingDocs", {
-      params: { email, query },
+      params: { email, query, page, pageSize, sortedColumn, sortOrder },
     });
   },
 
-  getSearchCompletedDocumentsByEmail: (email, query = "") => {
+  getSearchCompletedDocumentsByEmail: (email, query = "", page, pageSize, sortedColumn, sortOrder) => {
     return apiClient.get("/searchcompletedDocs", {
-      params: { email, query },
+      params: { email, query, page, pageSize, sortedColumn, sortOrder },
     });
   },
   getDetailsOfSignersById: (documentId) =>
     apiClient.get("/getDetailsOfSignersById", { params: { documentId } }),
+
+  AddSigner: (documentId, request) => {
+    return apiClient.put(`/${documentId}/add-signer`, request);
+  },
 };
 export default signerApi;

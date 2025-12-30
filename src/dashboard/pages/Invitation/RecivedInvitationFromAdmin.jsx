@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Table } from "react-bootstrap";
 import companyUserApi from "../../../api/companyUsers";
+import Pagination from "../../../components/Pagination";
 import InvitationStatus from "./InvitationStatus"; // adjust the path if needed
 
 const RecivedInvitationFromAdmin = () => {
@@ -10,7 +11,11 @@ const RecivedInvitationFromAdmin = () => {
 
   const user = JSON.parse(localStorage.getItem("user"));
   const userEmail = user?.userEmail;
-
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(0);
+  const [sortedColumn, setSortedColumn] = useState(null);
+  const [sortOrder, setSortOrder] = useState("asc");
   useEffect(() => {
     if (!userEmail) {
       setError("User email not found in localStorage.");
@@ -21,11 +26,20 @@ const RecivedInvitationFromAdmin = () => {
     const fetchInvitations = async () => {
       try {
         const response = await companyUserApi.getListofRecievedInvitations(
-          userEmail
+          userEmail,
+          page,
+          pageSize,
+          sortedColumn,
+          sortOrder
         );
-        setInvitations(response.data);
+        const content = response?.data?.content;
+
+        setInvitations(Array.isArray(content) ? content : []);
+        setTotalPages(response.data.totalPages || 0);
       } catch (err) {
         setError("Failed to fetch invitations.");
+        setInvitations([]);
+        setTotalPages(0);
         console.error(err);
       } finally {
         setLoading(false);
@@ -33,7 +47,7 @@ const RecivedInvitationFromAdmin = () => {
     };
 
     fetchInvitations();
-  }, [userEmail]);
+  }, [userEmail, page, pageSize, sortedColumn, sortOrder]);
 
   // Optional: function to handle status change for a single invitation
   const handleStatusChange = async (newStatus, index) => {
@@ -47,7 +61,7 @@ const RecivedInvitationFromAdmin = () => {
     // Prepare request payload
     const requestPayload = {
       userEmail: userEmail,
-      mobileNumber:invitation.mobileNumber,
+      mobileNumber: invitation.mobileNumber,
       invitedByEmail: invitation.invitedByEmail,
       companyName: invitation.companyName,
       invitationStatus: newStatus,
@@ -68,9 +82,36 @@ const RecivedInvitationFromAdmin = () => {
 
   if (loading) return <p>Loading invitations...</p>;
   if (error) return <p>{error}</p>;
+  const handlePageSizeChange = (e) => {
+    const size = parseInt(e.target.value);
+    setPageSize(size);
+    setPage(0);
+  };
 
+  const handlePageClick = (data) => {
+    const selectedPage = Math.max(0, Math.min(data.selected, totalPages - 1)); // Ensure selectedPage is within range
+    setPage(selectedPage);
+    localStorage.setItem("receivedInvitations", selectedPage); // Store the page number in localStorage
+  };
+
+  const handleSort = (column) => {
+    if (sortedColumn === column) {
+      // Toggle sort order if the same column is clicked
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      // Sort by the new column (default to ascending)
+      setSortedColumn(column);
+      setSortOrder("asc");
+    }
+  };
   return (
-    <div>
+    <div
+      style={{
+        minHeight: "80vh",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <Table hover>
         <thead>
           <tr>
@@ -85,9 +126,7 @@ const RecivedInvitationFromAdmin = () => {
         <tbody>
           {invitations.length === 0 ? (
             <tr>
-              <td colSpan="5">
-                No invitations found.
-              </td>
+              <td colSpan="5">No invitations found.</td>
             </tr>
           ) : (
             invitations.map((invitation, index) => (
@@ -110,6 +149,17 @@ const RecivedInvitationFromAdmin = () => {
           )}
         </tbody>
       </Table>
+      {invitations.length > 0 && totalPages > 0 && (
+        <div style={{ marginTop: "auto" }}>
+          <Pagination
+            page={page}
+            pageSize={pageSize}
+            totalPages={totalPages}
+            handlePageSizeChange={handlePageSizeChange}
+            handlePageClick={handlePageClick}
+          />
+        </div>
+      )}
     </div>
   );
 };

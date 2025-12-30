@@ -61,7 +61,7 @@ const PaymentSend = ({ onPrevious, formData }) => {
         const user = JSON.parse(localStorage.getItem("user"));
         if (!user) return;
 
-        const response = await companyApi.getCompaniesByEmail(user.userEmail);
+        const response = await companyApi.getListOfCompanyByAdminEmail(user.userEmail);
         setUserCompanies(response.data || []);
 
         const assignedResponse = await companyUserApi.getAssignedCompanies(

@@ -27,19 +27,19 @@ const companyUserApi = {
   acceptInvitation: (acceptInvitationData) => {
     return apiClient.put("/acceptInvitation", acceptInvitationData);
   },
-  getListOfSentInvitations: (invitedByEmail) => {
+  getListOfSentInvitations: (invitedByEmail,page,pageSize,sortedColumn,sortOrder) => {
     return apiClient.get("/getListofSentInvitations", {
-      params: { invitedByEmail },
+      params: { invitedByEmail,page,pageSize,sortedColumn,sortOrder },
     });
   },
-  getListofRecievedInvitations: (userEmail) => {
+  getListofRecievedInvitations: (userEmail,page,pageSize,sortedColumn,sortOrder) => {
     return apiClient.get("/getListofRecievedInvitations", {
-      params: { userEmail },
+      params: { userEmail,page,pageSize,sortedColumn,sortOrder },
     });
   },
-  getAssignedCompanies: (userEmail) =>
+  getAssignedCompanies: (userEmail,page,pageSize,sortedColumn,sortOrder) =>
     apiClient.get(`/getAssignedCompanies`, {
-      params: { userEmail },
+      params: { userEmail,page,pageSize,sortedColumn,sortOrder },
     }),
 
   getUsersByCompanyName: (companyName) =>

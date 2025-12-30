@@ -36,15 +36,21 @@ const documentApi = {
       },
     });
   },
-  getMyConsents: (senderEmail) => {
+  getMyConsents: (senderEmail, page, pageSize, sortedColumn, sortOrder) => {
     return apiClient.get("/my-consents", {
-      params: { senderEmail },
+      params: {
+        senderEmail,
+        page,
+        pageSize,
+        sortedColumn,
+        sortOrder,
+      },
     });
   },
 
-  getDrafts: (senderEmail) => {
+  getDrafts: (senderEmail, page, pageSize, sortedColumn, sortOrder) => {
     return apiClient.get("/drafts", {
-      params: { senderEmail },
+      params: { senderEmail, page, pageSize, sortedColumn, sortOrder },
     });
   },
   // signerApi.js
@@ -67,15 +73,36 @@ const documentApi = {
       params: { documentId },
     });
   },
-
-  getSearchSentConsensts: (senderEmail, query = "") => {
+  getSearchSentConsensts: (
+    senderEmail,
+    query,
+    page,
+    pageSize,
+    sortedColumn,
+    sortOrder
+  ) => {
     return apiClient.get("/searchSentConsensts", {
-      params: { senderEmail, query },
+      params: {
+        senderEmail,
+        query,
+        page,
+        pageSize,
+        sortedColumn,
+        sortOrder,
+      },
     });
   },
-  getSearchDraftsConsensts: (senderEmail, query = "") => {
+
+  getSearchDraftsConsensts: (
+    senderEmail,
+    query = "",
+    page,
+    pageSize,
+    sortedColumn,
+    sortOrder
+  ) => {
     return apiClient.get("/searchDraftConsensts", {
-      params: { senderEmail, query },
+      params: { senderEmail, query, page, pageSize, sortedColumn, sortOrder },
     });
   },
   getDocumentFileReviewer: (documentId, email) => {
@@ -101,14 +128,26 @@ const documentApi = {
     return apiClient.get(`/${documentId}/summary`);
   },
 
-    getPersonalConsents: (senderEmail) => {
+  getPersonalConsents: (
+    senderEmail,
+    page,
+    pageSize,
+    sortedColumn,
+    sortOrder
+  ) => {
     return apiClient.get("/personal-consents", {
-      params: { senderEmail },
+      params: { senderEmail, page, pageSize, sortedColumn, sortOrder },
     });
   },
-    getCompanyConsents: (senderEmail) => {
+  getCompanyConsents: (
+    senderEmail,
+    page,
+    pageSize,
+    sortedColumn,
+    sortOrder
+  ) => {
     return apiClient.get("/company-consents", {
-      params: { senderEmail },
+      params: { senderEmail, page, pageSize, sortedColumn, sortOrder },
     });
   },
 };

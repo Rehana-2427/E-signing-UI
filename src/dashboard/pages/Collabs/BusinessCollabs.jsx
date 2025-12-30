@@ -5,21 +5,37 @@ import { HiDocumentReport } from "react-icons/hi";
 import { MdDelete } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import collaborationApi from "../../../api/collaborationApi";
+import Pagination from "../../../components/Pagination";
 
 const BusinessCollabs = () => {
- const [collaborations, setCollaborations] = useState([]);
+  const [collaborations, setCollaborations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedCollab, setSelectedCollab] = useState(null);
   const userEmail = JSON.parse(localStorage.getItem("user"))?.userEmail;
   const navigate = useNavigate();
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(0);
+  const [sortedColumn, setSortedColumn] = useState(null);
+  const [sortOrder, setSortOrder] = useState("asc");
 
   useEffect(() => {
     if (userEmail) {
       collaborationApi
-        .getCollabsByCompanyUserEmail(userEmail)
+        .getCollabsByCompanyUserEmail(
+          userEmail,
+          page,
+          pageSize,
+          sortedColumn,
+          sortOrder
+        )
         .then((response) => {
-          const data = response.data.map((collab) => ({
+          const pageData = response.data;
+
+          const content = pageData?.content || [];
+
+          const mapped = content.map((collab) => ({
             collabId: collab.id,
             createdBy: collab.createdBy,
             collaborationName: collab.collaborationName,
@@ -28,18 +44,22 @@ const BusinessCollabs = () => {
             costChargedTo: collab.costChargedTo,
             forCompany: collab.forCompany,
             companyName: collab.companyName,
-         
             status: collab.status,
           }));
-          setCollaborations(data);
+
+          setCollaborations(mapped);
+          setTotalPages(pageData.totalPages || 0);
           setLoading(false);
         })
+
         .catch((err) => {
+          setCollaborations([]);
+          setTotalPages(0);
           // setError("Failed to load collaborations.");
           setLoading(false);
         });
     }
-  }, [userEmail]);
+  }, [userEmail, page, pageSize, sortedColumn, sortOrder]);
 
   const handleBackClick = () => {
     setSelectedCollab(null);
@@ -58,16 +78,38 @@ const BusinessCollabs = () => {
   if (error) {
     return <div>{error}</div>;
   }
+  const handlePageSizeChange = (e) => {
+    const size = parseInt(e.target.value);
+    setPageSize(size);
+    setPage(0);
+  };
 
+  const handlePageClick = (data) => {
+    const selectedPage = Math.max(0, Math.min(data.selected, totalPages - 1)); // Ensure selectedPage is within range
+    setPage(selectedPage);
+    localStorage.setItem("businessCollabs", selectedPage); // Store the page number in localStorage
+  };
+
+  const handleSort = (column) => {
+    if (sortedColumn === column) {
+      // Toggle sort order if the same column is clicked
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      // Sort by the new column (default to ascending)
+      setSortedColumn(column);
+      setSortOrder("asc");
+    }
+  };
   return (
     <div
       className="scrollable-container"
       style={{
         height: "100%",
+        minHeight: "80vh",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
-      
-
       {selectedCollab ? (
         <>
           <div className="d-flex justify-content-end align-items-end mt-2">
@@ -86,10 +128,123 @@ const BusinessCollabs = () => {
               <thead>
                 <tr>
                   <th>#</th>
-                  <th>Collaboration Name</th>
-                  <th>Created By</th>
-                  <th>Company</th>
-                  <th>Person</th>
+                  <th
+                    onClick={() => handleSort("collaborationName")}
+                    style={{ cursor: "pointer" }}
+                  >
+                    Collaboration Name
+                    <span>
+                      <span
+                        style={{
+                          color:
+                            sortedColumn === "collaborationName" &&
+                            sortOrder === "asc"
+                              ? "black"
+                              : "gray",
+                        }}
+                      >
+                        ↑
+                      </span>{" "}
+                      <span
+                        style={{
+                          color:
+                            sortedColumn === "collaborationName" &&
+                            sortOrder === "desc"
+                              ? "black"
+                              : "gray",
+                        }}
+                      >
+                        ↓
+                      </span>
+                    </span>
+                  </th>
+                  <th
+                    onClick={() => handleSort("createdBy")}
+                    style={{ cursor: "pointer" }}
+                  >
+                    Created By
+                    <span>
+                      <span
+                        style={{
+                          color:
+                            sortedColumn === "createdBy" && sortOrder === "asc"
+                              ? "black"
+                              : "gray",
+                        }}
+                      >
+                        ↑
+                      </span>{" "}
+                      <span
+                        style={{
+                          color:
+                            sortedColumn === "createdBy" && sortOrder === "desc"
+                              ? "black"
+                              : "gray",
+                        }}
+                      >
+                        ↓
+                      </span>
+                    </span>
+                  </th>
+                  <th
+                    onClick={() => handleSort("companyName")}
+                    style={{ cursor: "pointer" }}
+                  >
+                    Company{" "}
+                    <span>
+                      <span
+                        style={{
+                          color:
+                            sortedColumn === "companyName" &&
+                            sortOrder === "asc"
+                              ? "black"
+                              : "gray",
+                        }}
+                      >
+                        ↑
+                      </span>{" "}
+                      <span
+                        style={{
+                          color:
+                            sortedColumn === "companyName" &&
+                            sortOrder === "desc"
+                              ? "black"
+                              : "gray",
+                        }}
+                      >
+                        ↓
+                      </span>
+                    </span>
+                  </th>
+                  <th
+                    onClick={() => handleSort("personName")}
+                    style={{ cursor: "pointer" }}
+                  >
+                    Person{" "}
+                    <span>
+                      <span
+                        style={{
+                          color:
+                            sortedColumn === "personName" && sortOrder === "asc"
+                              ? "black"
+                              : "gray",
+                        }}
+                      >
+                        ↑
+                      </span>{" "}
+                      <span
+                        style={{
+                          color:
+                            sortedColumn === "personName" &&
+                            sortOrder === "desc"
+                              ? "black"
+                              : "gray",
+                        }}
+                      >
+                        ↓
+                      </span>
+                    </span>
+                  </th>
                   {/* <th>Duration</th> */}
                   {/* <th>Max Charge</th>
                   <th>Charged To</th> */}
@@ -146,7 +301,7 @@ const BusinessCollabs = () => {
                         }
                       >
                         <Button variant="danger" className="ms-2">
-                          <MdDelete  />
+                          <MdDelete />
                         </Button>
                       </OverlayTrigger>
                     </td>
@@ -171,10 +326,21 @@ const BusinessCollabs = () => {
               </tbody>
             </Table>
           )}
+          {collaborations.length > 0 && totalPages > 0 && (
+            <div style={{ marginTop: "auto" }}>
+              <Pagination
+                page={page}
+                pageSize={pageSize}
+                totalPages={totalPages}
+                handlePageSizeChange={handlePageSizeChange}
+                handlePageClick={handlePageClick}
+              />
+            </div>
+          )}
         </>
       )}
     </div>
   );
 };
 
-export default BusinessCollabs
+export default BusinessCollabs;

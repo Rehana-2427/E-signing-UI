@@ -9,6 +9,7 @@ import { MdDelete } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import documentApi from "../../../api/documentapi";
+import Pagination from "../../../components/Pagination";
 import ReminderModal from "../ReminderModal";
 import SearchBar from "../SearchBar";
 
@@ -22,7 +23,11 @@ const CompanyConsents = () => {
   const [searchTerm, setSearchTerm] = useState(""); // track the last submitted search
   const user = JSON.parse(localStorage.getItem("user"));
   const senderEmail = user?.userEmail;
-
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(0);
+  const [sortedColumn, setSortedColumn] = useState(null);
+  const [sortOrder, setSortOrder] = useState("asc");
   useEffect(() => {
     const fetchConsents = async (query) => {
       setLoading(true);
@@ -31,15 +36,29 @@ const CompanyConsents = () => {
         if (searchTerm.trim() !== "") {
           response = await documentApi.getSearchSentConsensts(
             senderEmail,
-            searchTerm
+            searchTerm,
+            page,
+            pageSize,
+            sortedColumn,
+            sortOrder
           );
         } else {
-          response = await documentApi.getCompanyConsents(senderEmail);
+          response = await documentApi.getCompanyConsents(
+            senderEmail,
+            page,
+            pageSize,
+            sortedColumn,
+            sortOrder
+          );
         }
-        setConsents(response.data || []);
+        const content = response?.data?.content;
+
+        setConsents(Array.isArray(content) ? content : []);
+        setTotalPages(response.data.totalPages || 0);
       } catch (error) {
         console.error("Failed to fetch consents:", error);
         setConsents([]);
+        setTotalPages(0);
       } finally {
         setLoading(false);
       }
@@ -52,7 +71,7 @@ const CompanyConsents = () => {
     return () => {
       debouncedFetch.cancel();
     };
-  }, [senderEmail, searchTerm]);
+  }, [senderEmail, searchTerm, page, pageSize, sortedColumn, sortOrder]);
 
   const handleEmailClick = (doc) => {
     setSelectedDoc(doc);
@@ -112,8 +131,35 @@ const CompanyConsents = () => {
     );
   };
 
+  const handlePageSizeChange = (e) => {
+    const size = parseInt(e.target.value);
+    setPageSize(size);
+    setPage(0);
+  };
+  const handlePageClick = (data) => {
+    const selectedPage = Math.max(0, Math.min(data.selected, totalPages - 1));
+    setPage(selectedPage);
+    localStorage.setItem("company-consents", selectedPage);
+  };
+
+  const handleSort = (column) => {
+    if (sortedColumn === column) {
+      // Toggle sort order if the same column is clicked
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      // Sort by the new column (default to ascending)
+      setSortedColumn(column);
+      setSortOrder("asc");
+    }
+  };
   return (
-    <>
+    <div
+      style={{
+        minHeight: "80vh",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <div
         style={{
           display: "flex",
@@ -135,8 +181,62 @@ const CompanyConsents = () => {
         <thead>
           <tr>
             <th>#id</th>
-            <th>Document Name</th>
-            <th>Company Name</th>
+            <th
+              onClick={() => handleSort("documentName")}
+              style={{ cursor: "pointer" }}
+            >
+              Document Name
+              <span>
+                <span
+                  style={{
+                    color:
+                      sortedColumn === "documentName" && sortOrder === "asc"
+                        ? "black"
+                        : "gray",
+                  }}
+                >
+                  ↑
+                </span>{" "}
+                <span
+                  style={{
+                    color:
+                      sortedColumn === "documentName" && sortOrder === "desc"
+                        ? "black"
+                        : "gray",
+                  }}
+                >
+                  ↓
+                </span>
+              </span>
+            </th>
+            <th
+              onClick={() => handleSort("companyName")}
+              style={{ cursor: "pointer" }}
+            >
+              Company Name
+              <span>
+                <span
+                  style={{
+                    color:
+                      sortedColumn === "companyName" && sortOrder === "asc"
+                        ? "black"
+                        : "gray",
+                  }}
+                >
+                  ↑
+                </span>{" "}
+                <span
+                  style={{
+                    color:
+                      sortedColumn === "companyName" && sortOrder === "desc"
+                        ? "black"
+                        : "gray",
+                  }}
+                >
+                  ↓
+                </span>
+              </span>
+            </th>
             <th>Sent On</th>
             <th># of Reviewers count</th>
             <th># of signers count</th>
@@ -331,6 +431,17 @@ const CompanyConsents = () => {
           )}
         </tbody>
       </Table>
+      {consents.length > 0 && totalPages > 0 && (
+        <div style={{ marginTop: "auto" }}>
+          <Pagination
+            page={page}
+            pageSize={pageSize}
+            totalPages={totalPages}
+            handlePageSizeChange={handlePageSizeChange}
+            handlePageClick={handlePageClick}
+          />
+        </div>
+      )}
 
       <ReminderModal
         show={showModal}
@@ -339,7 +450,7 @@ const CompanyConsents = () => {
         documentName={selectedDoc?.documentName}
         onSend={handleSendReminder}
       />
-    </>
+    </div>
   );
 };
 

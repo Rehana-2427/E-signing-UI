@@ -3,7 +3,7 @@ import { PDFDocument } from "pdf-lib"; // ✅ Import PDF library
 import { useEffect, useState } from "react";
 import { Button, Card, Col, Form, Row } from "react-bootstrap";
 import { FaTrash } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import * as Yup from "yup";
 import adminApi from "../../../api/adminApi";
@@ -30,6 +30,9 @@ const DocumentDetails = ({ onNext, formData, setFormData, userCredit }) => {
   const [userCompanies, setUserCompanies] = useState([]);
   const [assignedCompanies, setAssignedCompanies] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState("");
+  const location = useLocation();
+  const { documentName, file, fromTemplate } = location.state || {};
+
   const basicFormSchema = Yup.object().shape({
     documentName: Yup.string().required("Document Name is required"),
     description: Yup.string(),
@@ -56,6 +59,7 @@ const DocumentDetails = ({ onNext, formData, setFormData, userCredit }) => {
 
     fetchUserCompanies();
   }, []);
+
   const mergedCompanies = [
     ...userCompanies.map((c) => ({ ...c, type: "owned" })),
     ...assignedCompanies.map((c) => ({ ...c, type: "assigned" })),
@@ -217,9 +221,9 @@ const DocumentDetails = ({ onNext, formData, setFormData, userCredit }) => {
       <Card className="p-4">
         <Formik
           initialValues={{
-            documentName: formData.documentName || "",
+            documentName: documentName || formData.documentName || "",
             description: formData.description || "",
-            file: formData.file || null,
+            file: file || formData.file || null,
           }}
           validationSchema={basicFormSchema}
           onSubmit={async (values) => {
@@ -353,19 +357,36 @@ const DocumentDetails = ({ onNext, formData, setFormData, userCredit }) => {
                 <Form.Label className="required-label">
                   Upload Document
                 </Form.Label>
+
                 <Form.Control
                   type="file"
                   name="file"
                   accept="application/pdf"
+                  disabled={fromTemplate && !!values.file}
                   onChange={(event) => {
                     setFieldValue("file", event.currentTarget.files[0]);
                   }}
                   isInvalid={touched.file && errors.file}
                 />
+
+                {fromTemplate && values.file && (
+                  <div className="mt-2 text-success">
+                    ✔ File already added from template:{" "}
+                    <strong>{values.file.name}</strong>
+                  </div>
+                )}
+
+                {!fromTemplate && values.file && (
+                  <div className="mt-2 text-success">
+                    Selected file: <strong>{values.file.name}</strong>
+                  </div>
+                )}
+
                 <Form.Control.Feedback type="invalid">
                   {errors.file}
                 </Form.Control.Feedback>
               </Form.Group>
+
               <Form.Group controlId="addReviewerCheckbox" className="mb-3">
                 <Form.Check
                   type="checkbox"

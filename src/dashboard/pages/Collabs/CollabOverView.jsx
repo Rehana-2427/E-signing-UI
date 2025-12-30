@@ -266,7 +266,7 @@ const CollabOverview = () => {
           confirmButtonText: "OK",
         }).then(() => {
           // window.location.reload();
-          navigate("/dashboard/my-collabs?tab=user-Collabs");
+          navigate("/dashboard/my-collabs?tab=all-collabs");
         });
       } else {
         Swal.fire({

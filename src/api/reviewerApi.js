@@ -8,11 +8,11 @@ const apiClient = axios.create({
 });
 
 const reviewerApi = {
-  getUnRevieweDocsByEmail: (reviewerEmail) =>
-    apiClient.get("/unreviewedDocs", { params: { reviewerEmail } }),
+  getUnRevieweDocsByEmail: (reviewerEmail,page,pageSize,sortedColumn,sortOrder) =>
+    apiClient.get("/unreviewedDocs", { params: { reviewerEmail,page,pageSize,sortedColumn,sortOrder } }),
 
-  getRevieweDocsByEmail: (reviewerEmail) =>
-    apiClient.get("/reviewedDocs", { params: { reviewerEmail } }),
+  getRevieweDocsByEmail: (reviewerEmail,page,pageSize,sortedColumn,sortOrder) =>
+    apiClient.get("/reviewedDocs", { params: { reviewerEmail,page,pageSize,sortedColumn,sortOrder } }),
 
   approveDocumentReview: (payload) =>
     apiClient.put("/approveDocument", null, {
@@ -21,6 +21,9 @@ const reviewerApi = {
 
   getDetailsOfReviewerById: (documentId) =>
     apiClient.get("/getDetailsOfReviewerById", { params: { documentId } }),
+  AddReviewer: (documentId, request) => {
+    return apiClient.put(`/${documentId}/add-reviewer`, request);
+  },
 };
 
 export default reviewerApi;

@@ -5,6 +5,7 @@ import { FaEnvelope, FaEye } from "react-icons/fa";
 import { IoChatbubbles } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import signerApi from "../../../api/signerapi";
+import Pagination from "../../../components/Pagination";
 import SearchBar from "../SearchBar";
 
 const PendingDocs = () => {
@@ -19,6 +20,11 @@ const PendingDocs = () => {
   const user = JSON.parse(localStorage.getItem("user"));
   const userEmail = user?.userEmail;
   const navigate = useNavigate();
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(0);
+  const [sortedColumn, setSortedColumn] = useState(null);
+  const [sortOrder, setSortOrder] = useState("asc");
 
   useEffect(() => {
     const fetchPendingDocs = async (query) => {
@@ -28,15 +34,28 @@ const PendingDocs = () => {
         if (query && query.trim() !== "") {
           response = await signerApi.getSearchPendingDocumentsByEmail(
             userEmail,
-            query
+            query,
+            page,
+            pageSize,
+            sortedColumn,
+            sortOrder
           );
         } else {
-          response = await signerApi.getDocumentsByEmail(userEmail);
+          response = await signerApi.getDocumentsByEmail(
+            userEmail,
+            page,
+            pageSize,
+            sortedColumn,
+            sortOrder
+          );
         }
-        setDocs(response.data || []);
+        const docs = response?.data?.content;
+        setDocs(Array.isArray(docs) ? docs : []);
+        setTotalPages(response.data.totalPages || 0);
       } catch (error) {
         console.error("Failed to fetch documents:", error);
         setDocs([]);
+        setTotalPages(0);
       } finally {
         setLoading(false);
       }
@@ -48,7 +67,15 @@ const PendingDocs = () => {
     return () => {
       debouncedFetch.cancel();
     };
-  }, [userEmail, searchTerm, searchQuery]);
+  }, [
+    userEmail,
+    searchTerm,
+    searchQuery,
+    page,
+    pageSize,
+    sortedColumn,
+    sortOrder,
+  ]);
 
   // Fetch signers details when documentId is selected
   useEffect(() => {
@@ -83,7 +110,7 @@ const PendingDocs = () => {
     setSearchTerm(searchQuery.trim()); // Set searchTerm to trigger search
   };
 
-   const handleChatHubClick = (documentId,documentName) => {
+  const handleChatHubClick = (documentId, documentName) => {
     navigate("/dashboard/chat-app-signers", {
       state: {
         documentId,
@@ -181,9 +208,36 @@ const PendingDocs = () => {
   };
 
   if (loading) return <p>Loading pending Docs...</p>;
+  const handlePageSizeChange = (e) => {
+    const size = parseInt(e.target.value);
+    setPageSize(size);
+    setPage(0);
+  };
 
+  const handlePageClick = (data) => {
+    const selectedPage = Math.max(0, Math.min(data.selected, totalPages - 1)); // Ensure selectedPage is within range
+    setPage(selectedPage);
+    localStorage.setItem("pendingDocs", selectedPage); // Store the page number in localStorage
+  };
+
+  const handleSort = (column) => {
+    if (sortedColumn === column) {
+      // Toggle sort order if the same column is clicked
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      // Sort by the new column (default to ascending)
+      setSortedColumn(column);
+      setSortOrder("asc");
+    }
+  };
   return (
-    <div>
+    <div
+      style={{
+        minHeight: "80vh",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <div
         style={{
           display: "flex",
@@ -237,7 +291,9 @@ const PendingDocs = () => {
                   <td>
                     <Button
                       variant="secondary"
-                      onClick={() => handleChatHubClick(doc.documentId,documentName)}
+                      onClick={() =>
+                        handleChatHubClick(doc.documentId, documentName)
+                      }
                       title="Chat"
                     >
                       <IoChatbubbles />
@@ -278,6 +334,17 @@ const PendingDocs = () => {
           )}
         </tbody>
       </Table>
+      <div style={{ marginTop: "auto" }}>
+        {docs.length > 0 && totalPages > 0 && (
+          <Pagination
+            page={page}
+            pageSize={pageSize}
+            totalPages={totalPages}
+            handlePageSizeChange={handlePageSizeChange}
+            handlePageClick={handlePageClick}
+          />
+        )}
+      </div>
     </div>
   );
 };

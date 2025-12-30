@@ -1,15 +1,25 @@
 import { useState } from "react";
-import { Button, Container, Table } from "react-bootstrap";
-import { FaEye, FaFileWord } from "react-icons/fa";
+import {
+  Button,
+  Container,
+  OverlayTrigger,
+  Spinner,
+  Table,
+  Tooltip,
+} from "react-bootstrap";
+import { FaDownload, FaEye, FaFileWord } from "react-icons/fa";
+import { MdOutlineCreateNewFolder } from "react-icons/md";
+import { useNavigate } from "react-router-dom";
+import convertDocxToPdf from "../../../api/convertDocxToPdf";
 
 const templates = [
   { name: "Rent_Deed", file: "Rent_Deed.docx" },
-  { name: "LEASE_AGREEMENT", file: "LEASE_AGREEMENT.docx" },
+  { name: "Lease_Agreement", file: "Lease_Agreement.docx" },
   { name: "Employment_Contract", file: "Employment_Contract.docx" },
   { name: "Service_Agreement", file: "Service_Agreement.docx" },
   { name: "Consulting_Contract", file: "Consulting_Contract.docx" },
   { name: "Loan_Agreement", file: "Loan_Agreement.docx" },
-  { name: "Non_Disclosure", file: "NDA.docx" },
+  { name: "Non_Disclosure", file: "Non_Disclosure.docx" },
   { name: "Business_Proposal", file: "Business_Proposal.docx" },
 ];
 
@@ -38,21 +48,112 @@ const MSDocRenderer = ({ fileUrl }) => {
 };
 
 const ConsentTemplates = () => {
-  const [previewComingSoon, setPreviewComingSoon] = useState(false);
-  const [previewFileUrl, setPreviewFileUrl] = useState(null);
-  // const handleComingSoon = () => {
-  //   Swal.fire({
-  //     icon: 'info',
-  //     title: 'Coming Soon!',
-  //     text: 'This feature is under development.',
-  //     confirmButtonText: 'OK'
-  //   });
-  // };
-  const handlePreview = (template) => {
-    const fileUrl =
-      "https://my-public-bucket.s3.amazonaws.com/templates/Rent_Deed.docx";
+  const [loadingTemplate, setLoadingTemplate] = useState(null);
+  const [previewLoadingTemplate, setPreviewLoadingTemplate] = useState(null);
+  const navigate = useNavigate();
 
-    setPreviewFileUrl(fileUrl);
+  // const createNewConsent = async (template) => {
+  //   console.log("Creating new consent from template:", template);
+  //   setLoadingTemplate(template.name); // 👈 mark THIS template as loading
+
+  //   try {
+  //     const fileUrl = `${window.location.origin}/templates/${template.file}`;
+  //     const response = await fetch(fileUrl);
+  //     const blob = await response.blob();
+
+  //     const docxFile = new File([blob], template.file, {
+  //       type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  //     });
+
+  //     const pdfResponse = await convertDocxToPdf.convert(docxFile);
+
+  //     const contentType = pdfResponse.headers["content-type"];
+  //     if (!contentType || !contentType.includes("application/pdf")) {
+  //       throw new Error("Invalid PDF response");
+  //     }
+
+  //     const pdfBlob = new Blob([pdfResponse.data], {
+  //       type: "application/pdf",
+  //     });
+
+  //     const pdfUrl = window.URL.createObjectURL(pdfBlob);
+  //     window.open(pdfUrl, "_blank");
+  //   } catch (error) {
+  //     console.error("PDF conversion failed:", error);
+  //     alert("Failed to convert document to PDF");
+  //   } finally {
+  //     setLoadingTemplate(null);
+  //   }
+  // };
+  const createNewConsent = async (template) => {
+    setLoadingTemplate(template.name);
+
+    try {
+      // 1. Fetch DOCX
+      const fileUrl = `${window.location.origin}/templates/${template.file}`;
+      const response = await fetch(fileUrl);
+      const blob = await response.blob();
+
+      const docxFile = new File([blob], template.file, {
+        type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      });
+
+      // 2. Convert to PDF
+      const pdfResponse = await convertDocxToPdf.convert(docxFile);
+
+      const pdfBlob = new Blob([pdfResponse.data], {
+        type: "application/pdf",
+      });
+
+      // ✅ Create PDF File (IMPORTANT)
+      const pdfFile = new File([pdfBlob], template.name + ".pdf", {
+        type: "application/pdf",
+      });
+
+      // 3. Navigate to DocumentDetails with state
+      navigate("/dashboard/my-consents/new-consent/step/1", {
+        state: {
+          documentName: template.name.replaceAll("_", " "),
+          file: pdfFile,
+          fromTemplate: true,
+        },
+      });
+    } catch (error) {
+      console.error("PDF conversion failed:", error);
+      alert("Failed to convert document to PDF");
+    } finally {
+      setLoadingTemplate(null);
+    }
+  };
+  const previewTemplate = async (template) => {
+    setPreviewLoadingTemplate(template.name);
+
+    try {
+      // 1. Fetch DOCX
+      const fileUrl = `${window.location.origin}/templates/${template.file}`;
+      const response = await fetch(fileUrl);
+      const blob = await response.blob();
+
+      const docxFile = new File([blob], template.file, {
+        type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      });
+
+      // 2. Convert to PDF
+      const pdfResponse = await convertDocxToPdf.convert(docxFile);
+
+      const pdfBlob = new Blob([pdfResponse.data], {
+        type: "application/pdf",
+      });
+
+      // 3. Open PDF in new tab
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      window.open(pdfUrl, "_blank");
+    } catch (error) {
+      console.error("Preview failed:", error);
+      alert("Failed to preview document");
+    } finally {
+      setPreviewLoadingTemplate(null);
+    }
   };
 
   return (
@@ -62,12 +163,6 @@ const ConsentTemplates = () => {
         height: "100%",
       }}
     >
-      
-      <p style={{ color: "#555", fontStyle: "italic", marginBottom: "1rem" }}>
-        If you want to use templates, please download and edit them yourself for
-        now. Preview and edit functionality in SignBook is coming soon.
-      </p>
-
       <Table striped bordered hover responsive>
         <thead>
           <tr>
@@ -97,22 +192,66 @@ const ConsentTemplates = () => {
                 <td>{template.name}</td>
                 <td>
                   <div className="d-flex gap-2">
-                    <Button variant="primary" href={fileUrl} download>
-                      Download
-                    </Button>
+                    <OverlayTrigger
+                      placement="top"
+                      overlay={<Tooltip>Download Word Document</Tooltip>}
+                    >
+                      <Button variant="primary" href={fileUrl} download>
+                        <FaDownload />
+                      </Button>
+                    </OverlayTrigger>
 
-                    {/* <Button
-                      variant="secondary"
-                      onClick={handleComingSoon}
+                    <OverlayTrigger
+                      placement="top"
+                      overlay={<Tooltip>Preview PDF</Tooltip>}
                     >
-                      Preview <FaEye />
-                    </Button> */}
-                    <Button
-                      variant="secondary"
-                      onClick={() => handlePreview(template)}
+                      <Button
+                        variant="outline-secondary"
+                        onClick={() => previewTemplate(template)}
+                        disabled={previewLoadingTemplate === template.name}
+                      >
+                        {previewLoadingTemplate === template.name ? (
+                          <>
+                            <Spinner
+                              as="span"
+                              animation="border"
+                              size="sm"
+                              className="me-2"
+                            />
+                            loading...
+                          </>
+                        ) : (
+                          <FaEye />
+                        )}
+                      </Button>
+                    </OverlayTrigger>
+
+                    <OverlayTrigger
+                      placement="top"
+                      overlay={<Tooltip>Create Consent</Tooltip>}
                     >
-                      Preview <FaEye />
-                    </Button>
+                      <span className="d-inline-block">
+                        <Button
+                          variant="info"
+                          onClick={() => createNewConsent(template)}
+                          disabled={loadingTemplate === template.name}
+                        >
+                          {loadingTemplate === template.name ? (
+                            <>
+                              <Spinner
+                                as="span"
+                                animation="border"
+                                size="sm"
+                                className="me-2"
+                              />
+                              Creating...
+                            </>
+                          ) : (
+                            <MdOutlineCreateNewFolder />
+                          )}
+                        </Button>
+                      </span>
+                    </OverlayTrigger>
                   </div>
                 </td>
               </tr>
@@ -120,17 +259,6 @@ const ConsentTemplates = () => {
           })}
         </tbody>
       </Table>
-      {previewFileUrl && (
-        <div style={{ marginTop: "2rem", height: "600px" }}>
-          <MSDocRenderer fileUrl={previewFileUrl} />
-        </div>
-      )}
-
-      {previewComingSoon && (
-        <div style={{ marginTop: "1rem", color: "orange", fontWeight: "bold" }}>
-          Preview functionality coming soon!
-        </div>
-      )}
     </div>
   );
 };

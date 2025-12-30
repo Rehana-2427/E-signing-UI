@@ -6,6 +6,7 @@ import { RiFileEditFill } from "react-icons/ri";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import documentApi from "../../../api/documentapi";
+import Pagination from "../../../components/Pagination";
 import SearchBar from "../SearchBar";
 const Drafts = () => {
   const [consents, setConsents] = useState([]);
@@ -13,7 +14,12 @@ const Drafts = () => {
   const user = JSON.parse(localStorage.getItem("user"));
   const senderEmail = user?.userEmail;
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchTerm, setSearchTerm] = useState(""); // track the last submitted searc
+  const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(0);
+  const [sortedColumn, setSortedColumn] = useState(null);
+  const [sortOrder, setSortOrder] = useState("asc");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,24 +30,39 @@ const Drafts = () => {
         if (searchTerm.trim() !== "") {
           response = await documentApi.getSearchDraftsConsensts(
             senderEmail,
-            searchTerm
+            searchTerm,
+            page,
+            pageSize,
+            sortedColumn,
+            sortOrder
           );
         } else {
-          response = await documentApi.getDrafts(senderEmail);
+          response = await documentApi.getDrafts(
+            senderEmail,
+            page,
+            pageSize,
+            sortedColumn,
+            sortOrder
+          );
         }
-        setConsents(response.data || []);
+        const content = response?.data?.content;
+
+        setConsents(Array.isArray(content) ? content : []);
+        setTotalPages(response.data.totalPages || 0);
       } catch (error) {
         console.error("Failed to fetch consents:", error);
         setConsents([]);
+        setTotalPages(0);
       } finally {
         setLoading(false);
       }
     };
 
     fetchDrafts();
-  }, [senderEmail, searchTerm]);
+  }, [senderEmail, searchTerm, page, pageSize, sortedColumn, sortOrder]);
 
   const handleSearch = () => {
+    setPage(0); // Reset to first page on new search
     setSearchTerm(searchQuery.trim());
   };
   function base64ToBlob(base64, mimeType = "application/pdf") {
@@ -112,19 +133,47 @@ const Drafts = () => {
   };
   if (loading) return <p>Loading consents...</p>;
 
-  const handleChat = (documentId,documentName) => {
+  const handleChat = (documentId, documentName) => {
     if (!documentId) {
       Swal.fire("Error", "Document ID is missing.", "error");
       return;
     }
 
     navigate("/dashboard/chat-app", {
-      state: { documentId,documentName },
+      state: { documentId, documentName },
     });
   };
 
+  const handlePageSizeChange = (e) => {
+    const size = parseInt(e.target.value);
+    setPageSize(size);
+    setPage(0);
+  };
+
+  const handlePageClick = (data) => {
+    const selectedPage = Math.max(0, Math.min(data.selected, totalPages - 1)); // Ensure selectedPage is within range
+    setPage(selectedPage);
+    localStorage.setItem("drafts", selectedPage); // Store the page number in localStorage
+  };
+
+  const handleSort = (column) => {
+    if (sortedColumn === column) {
+      // Toggle sort order if the same column is clicked
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      // Sort by the new column (default to ascending)
+      setSortedColumn(column);
+      setSortOrder("asc");
+    }
+  };
   return (
-    <>
+    <div
+      style={{
+        minHeight: "80vh",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <div
         style={{
           display: "flex",
@@ -145,7 +194,34 @@ const Drafts = () => {
         <thead>
           <tr>
             <th>#id</th>
-            <th>Document Name</th>
+            <th
+              onClick={() => handleSort("documentName")}
+              style={{ cursor: "pointer" }}
+            >
+              Document Name
+              <span>
+                <span
+                  style={{
+                    color:
+                      sortedColumn === "documentName" && sortOrder === "asc"
+                        ? "black"
+                        : "gray",
+                  }}
+                >
+                  ↑
+                </span>{" "}
+                <span
+                  style={{
+                    color:
+                      sortedColumn === "documentName" && sortOrder === "desc"
+                        ? "black"
+                        : "gray",
+                  }}
+                >
+                  ↓
+                </span>
+              </span>
+            </th>{" "}
             <th># of Reviewers count</th>
             <th>Draft saved On</th>
             <th># of signers count</th>
@@ -180,7 +256,9 @@ const Drafts = () => {
                   <td>
                     <Button
                       variant="secondary"
-                      onClick={() => handleChat(consent.documentId,consent.documentName)}
+                      onClick={() =>
+                        handleChat(consent.documentId, consent.documentName)
+                      }
                       title="Chat"
                     >
                       <IoChatbubbles />
@@ -221,7 +299,18 @@ const Drafts = () => {
           )}
         </tbody>
       </Table>
-    </>
+      {consents.length > 0 && totalPages > 0 && (
+        <div style={{ marginTop: "auto" }}>
+          <Pagination
+            page={page}
+            pageSize={pageSize}
+            totalPages={totalPages}
+            handlePageSizeChange={handlePageSizeChange}
+            handlePageClick={handlePageClick}
+          />
+        </div>
+      )}
+    </div>
   );
 };
 

@@ -134,6 +134,12 @@ const Sidebar = () => {
         currentPath.startsWith("/dashboard/my-collabs")
       );
     }
+    if (linkPathname === "/dashboard/my-consents") {
+      return (
+        currentPath === "/dashboard/my-consents" ||
+        currentPath.startsWith("/dashboard/my-consents/")
+      );
+    }
 
     if (linkPathname === "/dashboard/review-documents") {
       return (
@@ -155,6 +161,9 @@ const Sidebar = () => {
         "/dashboard/creditPassBook/transaction-history",
       "/dashboard/my-consents": "/dashboard/my-consents/audit-trail",
       "/dashboard/contacts": "/dashboard/contacts/chat",
+      "/dashboard/profile": "/dashboard/profile/settings",
+      "/dashboard/templates": "/dashboard/templates/collab-templates",
+     "/dashboard/my-consents": "/dashboard/my-consents/new-consent",
     };
 
     for (const [key, basePath] of Object.entries(specialCases)) {
